@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../auth/store";
 import toast from "react-hot-toast";
 import { gsap } from "gsap";
@@ -181,10 +181,25 @@ export default function Navbar() {
 
   const navLinks = ["About", "How to use?", "Contact", "Reviews"];
 
+  const location = useLocation();
+
   const navigate = useNavigate();
   const isLoggedIn = useAuth((state) => state.authStatus);
   const user = useAuth((state) => state.user);
   const logout = useAuth((state) => state.logout);
+
+  useEffect(() => {
+    // 1. Only run if we have the 'triggerLogin' flag and user isn't logged in
+    if (location.state?.triggerLogin && !isLoggedIn) {
+      
+      // 2. Open the modal
+      setAuthModal("login");
+
+      // 3. IMPORTANT: Wipe the state immediately!
+      // This changes the URL state to {} so a refresh won't find 'triggerLogin'
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, isLoggedIn, navigate]);
 
   const handleLogOut = () => {
     toast.success("Successfully logged out!");

@@ -49,6 +49,7 @@ public class SecurityConfig {
                         authorizeHttpRequests -> authorizeHttpRequests
                                 .requestMatchers(AppConstants.AUTH_PUBLIC_URLS).permitAll()
                                 .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> 
                     oauth2.successHandler(authenticationSuccessHandler)
@@ -56,7 +57,6 @@ public class SecurityConfig {
                 )
                 .logout(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, e) -> {
-                    // error message
                     e.printStackTrace();
                     response.setStatus(401);
                     response.setContentType("application/json");

@@ -1,28 +1,51 @@
-import { useState } from 'react'
-import './index.css'
-import Login from './pages/login/login'
-import { Route, Routes } from 'react-router-dom'
-import Dashboard from './pages/dashboard/Dashboard'
-import { Toaster } from 'react-hot-toast'
-import Navbar from './components/Navbar/Navbar'
-import RegisterPage from './pages/register/register'
-import Home from './pages/home/home'
+import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import Navbar from "./components/Navbar/Navbar";
+import Home from "./pages/home/home";
+import Dashboard from "./pages/dashboard/Dashboard";
+import OptionsPage from "./pages/Options/OptionsPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import StorePage from "./pages/Store/StorePage";
+import ComplaintsPage from "./pages/Complaints/ComplaintsPage";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-    <Toaster position='top-right'/>
-    <Navbar />
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login/>}/>
-      <Route path="/profile" element={<Dashboard/>} />
-      <Route path="register" element={<RegisterPage/>} />
-    </Routes>
+      <Toaster position="top-right" />
+      <Navbar />
+      <Routes>
+        {/* Public Routes - No Popup ever triggered here */}
+        <Route path="/" element={<Home />} />
+        <Route path="/store" element={<StorePage />} />
+
+        {/* Protected Routes - These WILL trigger the popup if not logged in */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/raiseChallanRequestOptions"
+          element={
+            <ProtectedRoute>
+              <OptionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+            path="/complaints"
+            element={
+              <ProtectedRoute>
+                <ComplaintsPage/>
+              </ProtectedRoute>
+            }
+        />
+      </Routes>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
