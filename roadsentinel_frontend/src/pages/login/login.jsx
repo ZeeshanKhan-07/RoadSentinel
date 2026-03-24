@@ -32,7 +32,7 @@ const Login = ({ onClose, onSwitchToRegister }) => {
       await login(loginData);
       toast.success("Login Successful");
       onClose();
-      navigate("/dashboard");
+      navigate("/profile");
     } catch (err) {
       toast.error("Login failed");
       setError(err);

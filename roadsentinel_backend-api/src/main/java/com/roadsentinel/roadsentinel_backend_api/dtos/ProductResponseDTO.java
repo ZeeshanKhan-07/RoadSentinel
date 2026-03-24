@@ -14,6 +14,8 @@ public class ProductResponseDTO {
     private String description;
     private int quantity;
     private long price;
+    private String productVehicleCategory;
+    private String productGenderCategory;
     private List<String> images;
 
 }

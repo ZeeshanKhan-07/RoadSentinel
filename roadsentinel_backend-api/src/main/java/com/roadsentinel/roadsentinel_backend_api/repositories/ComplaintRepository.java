@@ -15,6 +15,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, UUID> {
 
     List<Complaint> findByUserId(UUID userId);
 
+    @Query("SELECT SUM(c.rewardAmount) FROM Complaint c WHERE c.user.id = :userId")
+    Long sumRewardAmountByUserId(@Param("userId") UUID userId);
+
     @Query("SELECT COUNT(c) FROM Complaint c WHERE c.user.id = :userId")
     long countByUserId(@Param("userId") UUID userId);
 }

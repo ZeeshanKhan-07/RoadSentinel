@@ -7,6 +7,7 @@ import OptionsPage from "./pages/Options/OptionsPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import StorePage from "./pages/Store/StorePage";
 import ComplaintsPage from "./pages/Complaints/ComplaintsPage";
+import OrderForm from "./pages/Order/OrderForm";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         {/* Public Routes - No Popup ever triggered here */}
         <Route path="/" element={<Home />} />
         <Route path="/store" element={<StorePage />} />
+        <Route path="/order" element={<OrderForm/>} />
 
         {/* Protected Routes - These WILL trigger the popup if not logged in */}
         <Route

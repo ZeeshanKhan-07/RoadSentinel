@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,62 +27,126 @@ import lombok.AllArgsConstructor;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ModelMapper modelMapper;
 
     @Override
     public ProductResponseDTO addProduct(ProductRequestDTO productRequestDTO) {
 
-        Products product = new Products();
+        Products product = modelMapper.map(productRequestDTO, Products.class);
 
-        product.setName(productRequestDTO.getName());
-        product.setDescription(productRequestDTO.getDescription());
-        product.setQuantity(productRequestDTO.getQuantity());
-        product.setPrice(productRequestDTO.getPrice());
-
-        List<ProductImage> imageList = new ArrayList<>();
-
-        if (productRequestDTO.getImages() != null) {
-
-            for (MultipartFile file : productRequestDTO.getImages()) {
-
-                String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-
-                Path uploadPath = Paths.get("uploads", "productImages");
-
-                try {
-
-                    if (!Files.exists(uploadPath)) {
-                        Files.createDirectories(uploadPath);
-                    }
-
-                    Path filePath = uploadPath.resolve(fileName);
-
-                    Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                } catch (IOException e) {
-                    throw new RuntimeException("Image upload failed");
-                }
-
-                ProductImage image = new ProductImage();
-                image.setImageUrl("/uploads/productImages" + fileName);
-                image.setProduct(product);
-
-                imageList.add(image);
-            }
-        }
+        List<ProductImage> imageList = saveImages(productRequestDTO.getImages(), product);
 
         product.setImages(imageList);
 
         Products savedProduct = productRepository.save(product);
 
-        ProductResponseDTO response = new ProductResponseDTO();
+        return mapToResponseDTO(savedProduct);
+    }
 
-        response.setId(savedProduct.getId().toString());
-        response.setName(savedProduct.getName());
-        response.setDescription(savedProduct.getDescription());
-        response.setQuantity(savedProduct.getQuantity());
-        response.setPrice(savedProduct.getPrice());
+    @Override
+    public List<ProductResponseDTO> getAllProducts() {
 
-        List<String> imageUrls = savedProduct.getImages()
+        return productRepository.findAll()
+                .stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+    }
+
+    @Override
+    public ProductResponseDTO updateProduct(UUID id, ProductRequestDTO productRequestDTO) {
+
+        Products product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        modelMapper.map(productRequestDTO, product);
+
+        deleteImagesFromStorage(product);
+
+        product.getImages().clear();
+
+        List<ProductImage> newImages = saveImages(productRequestDTO.getImages(), product);
+
+        product.setImages(newImages);
+
+        Products updatedProduct = productRepository.save(product);
+
+        return mapToResponseDTO(updatedProduct);
+    }
+
+    @Override
+    public void deleteProduct(UUID id) {
+
+        Products product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        deleteImagesFromStorage(product);
+
+        productRepository.delete(product);
+    }
+
+    private List<ProductImage> saveImages(List<MultipartFile> files, Products product) {
+
+        List<ProductImage> imageList = new ArrayList<>();
+
+        if (files == null)
+            return imageList;
+
+        Path uploadPath = Paths.get("uploads", "productImages");
+
+        try {
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create upload directory");
+        }
+
+        for (MultipartFile file : files) {
+
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+
+            try {
+                Path filePath = uploadPath.resolve(fileName);
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException("Image upload failed");
+            }
+
+            ProductImage image = new ProductImage();
+            image.setImageUrl("/uploads/productImages/" + fileName);
+            image.setProduct(product);
+
+            imageList.add(image);
+        }
+
+        return imageList;
+    }
+
+    private void deleteImagesFromStorage(Products product) {
+
+        if (product.getImages() == null)
+            return;
+
+        for (ProductImage img : product.getImages()) {
+            try {
+                String fileName = img.getImageUrl()
+                        .replace("/uploads/productImages/", "");
+
+                Path path = Paths.get("uploads", "productImages", fileName);
+
+                Files.deleteIfExists(path);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private ProductResponseDTO mapToResponseDTO(Products product) {
+
+        ProductResponseDTO response = modelMapper.map(product, ProductResponseDTO.class);
+
+        List<String> imageUrls = product.getImages()
                 .stream()
                 .map(ProductImage::getImageUrl)
                 .toList();
@@ -90,11 +155,4 @@ public class ProductServiceImpl implements ProductService {
 
         return response;
     }
-
-    @Override
-    public void deleteProduct(UUID id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteProduct'");
-    }
-
 }
