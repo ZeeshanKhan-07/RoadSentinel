@@ -7,17 +7,20 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.cloudinary.Cloudinary;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductRequestDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductResponseDTO;
 import com.roadsentinel.roadsentinel_backend_api.entities.ProductImage;
 import com.roadsentinel.roadsentinel_backend_api.entities.Products;
 import com.roadsentinel.roadsentinel_backend_api.repositories.ProductRepository;
+import com.roadsentinel.roadsentinel_backend_api.services.CloudinaryImageService;
 import com.roadsentinel.roadsentinel_backend_api.services.ProductService;
 
 import lombok.AllArgsConstructor;
@@ -28,11 +31,15 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
+    private final Cloudinary cloudinary;
+    private final CloudinaryImageService cloudinaryImageService;
 
     @Override
     public ProductResponseDTO addProduct(ProductRequestDTO productRequestDTO) {
 
         Products product = modelMapper.map(productRequestDTO, Products.class);
+
+        product.setImages(new ArrayList<>());
 
         List<ProductImage> imageList = saveImages(productRequestDTO.getImages(), product);
 
@@ -91,34 +98,21 @@ public class ProductServiceImpl implements ProductService {
         if (files == null)
             return imageList;
 
-        Path uploadPath = Paths.get("uploads", "productImages");
-
-        try {
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create upload directory");
-        }
-
-        for (MultipartFile file : files) {
-
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-
+        for(MultipartFile file : files) {
             try {
-                Path filePath = uploadPath.resolve(fileName);
-                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new RuntimeException("Image upload failed");
+                Map uploadResult = cloudinaryImageService.upload(file);
+                String imageUrl = (String) uploadResult.get("secure_url");
+                String publicId = (String) uploadResult.get("public_id");
+
+                ProductImage image = new ProductImage();
+                image.setImageUrl(imageUrl);
+                image.setProduct(product);
+                image.setPublicId(publicId);
+                imageList.add(image);
+            } catch (Exception e) {
+                throw new RuntimeException("Cloudinary upload failed for one or more files... " + e.getMessage());
             }
-
-            ProductImage image = new ProductImage();
-            image.setImageUrl("/uploads/productImages/" + fileName);
-            image.setProduct(product);
-
-            imageList.add(image);
         }
-
         return imageList;
     }
 

@@ -40,4 +40,10 @@ public class ComplaintController {
         long ans = complaintService.getTotalComplaints(userId);
         return ResponseEntity.ok(ans);
     }
+
+    @GetMapping("/{userId}/successedComplaints")
+    public ResponseEntity<Long> getTotalSuccessComplaints(@PathVariable UUID userId) {
+        long successed = complaintService.getTotalSuccessedComplaints(userId);
+        return ResponseEntity.ok(successed);
+    }
 }

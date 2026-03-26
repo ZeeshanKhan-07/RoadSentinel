@@ -8,9 +8,6 @@ import { gsap } from "gsap";
 import useAuth from "../../auth/store";
 import { getUserComplaints } from "../../services/complaintService";
 
-// ── Base URL for attachment images ────────────────────────────
-const BASE_URL = "http://localhost:8080";
-
 // ── Status badge config ───────────────────────────────────────
 const STATUS_CONFIG = {
   PENDING:   { label: "Pending",   bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
@@ -36,6 +33,13 @@ function formatDate(iso) {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: true,
   });
+}
+
+// ── Detect if a URL points to a video ────────────────────────
+function isVideoUrl(url) {
+  if (!url) return false;
+  const ext = url.split("?")[0].split(".").pop().toLowerCase();
+  return ["mp4", "webm", "ogg", "mov", "avi"].includes(ext);
 }
 
 // ── Vehicle icon (inline SVG) ─────────────────────────────────
@@ -247,7 +251,7 @@ function ComplaintCard({ complaint, index, cardRef }) {
               <p style={{ fontSize: "0.72rem", color: "#374151", marginTop: "0.2rem", fontFamily: "monospace", wordBreak: "break-all" }}>{complaint.id}</p>
             </div>
 
-            {/* Attachments */}
+            {/* ── Attachments ── */}
             {hasAttachments && (
               <div>
                 <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#4b5563" }}>
@@ -255,8 +259,10 @@ function ComplaintCard({ complaint, index, cardRef }) {
                 </span>
                 <div className="grid grid-cols-3 gap-2 mt-2 sm:grid-cols-4 md:grid-cols-5">
                   {complaint.attachments.map((att) => {
-                    const isVideo = att.fileType?.startsWith("video/");
-                    const src = `${BASE_URL}${att.fileUrl}`;
+                    // ── CHANGED: use att.imageUrl directly (Cloudinary full URL) ──
+                    const src = att.imageUrl;
+                    const isVideo = isVideoUrl(src);
+
                     return (
                       <div
                         key={att.id}
@@ -391,7 +397,6 @@ export default function ComplaintsPage({ onRaise }) {
           opacity: 0,
         }}
       >
-        {/* Back / navigate */}
         <button
           onClick={() => window.history.back()}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
@@ -407,7 +412,6 @@ export default function ComplaintsPage({ onRaise }) {
           My Complaints
         </h1>
 
-        {/* Count badge */}
         {!loading && !fetchError && (
           <span style={{
             fontFamily: "'Inter', sans-serif", fontSize: "0.72rem", fontWeight: 700,

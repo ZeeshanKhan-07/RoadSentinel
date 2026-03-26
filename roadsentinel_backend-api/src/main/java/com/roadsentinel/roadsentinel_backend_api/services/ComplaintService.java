@@ -11,4 +11,5 @@ public interface ComplaintService{
     ComplaintDTO registerComplain(ComplaintDTO complaintDTO, List<MultipartFile> files);
     List<ComplaintDTO> getComplaintByUserId(UUID userId);
     long getTotalComplaints(UUID userId);
+    long getTotalSuccessedComplaints(UUID userId);
 }

@@ -64,7 +64,7 @@ public class Complaint {
     @Enumerated(EnumType.STRING)
     private Status status = Status.PENDING;
 
-    @OneToMany(mappedBy = "complain", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "complaint", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Attachment> attachments = new ArrayList<>();
 
     public void addAttachment(Attachment attachment) {
@@ -72,6 +72,6 @@ public class Complaint {
             this.attachments = new ArrayList<>();
         }
         this.attachments.add(attachment);
-        attachment.setComplain(this);
+        attachment.setComplaint(this);
     }
 }

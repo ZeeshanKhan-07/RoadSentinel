@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class AttachmentDTO {
     private UUID id;
-    private String fileUrl;
-    private String fileType;
+    private String imageUrl;
+    private String publicId;
 }

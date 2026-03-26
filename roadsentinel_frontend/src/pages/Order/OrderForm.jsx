@@ -1,11 +1,22 @@
+// OrderForm.jsx
+// Order placement form. Receives `product` via React Router location.state.
+// Dependencies: React, React Router, Tailwind CSS, GSAP, react-hot-toast
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { gsap } from "gsap";
 import toast from "react-hot-toast";
 import useAuth from "../../auth/store";
-import { placeOrder } from "../../services/ProductService";
+import { placeOrder } from "../../services/productService";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = ""; // images served from Vite dev server root
+
+// Resolve any image URL — Cloudinary (https://...) or legacy relative path
+const getImgSrc = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `http://localhost:8080${url}`;
+};
 
 // ── Field label ───────────────────────────────────────────────
 function Label({ children, required }) {
@@ -156,9 +167,7 @@ export default function OrderForm() {
 
   if (!product) return null;
 
-  const thumb = product.images?.[0]
-    ? (product.images[0].startsWith("http") ? product.images[0] : `${BASE_URL}${product.images[0]}`)
-    : null;
+  const thumb = getImgSrc(product.images?.[0]);
 
   // ── Success ───────────────────────────────────────────────
   if (status === "success") {

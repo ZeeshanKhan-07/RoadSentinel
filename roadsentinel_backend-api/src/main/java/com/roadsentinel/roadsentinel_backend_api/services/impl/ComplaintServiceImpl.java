@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,7 @@ import com.roadsentinel.roadsentinel_backend_api.entities.Complaint;
 import com.roadsentinel.roadsentinel_backend_api.entities.User;
 import com.roadsentinel.roadsentinel_backend_api.repositories.ComplaintRepository;
 import com.roadsentinel.roadsentinel_backend_api.repositories.UserRepository;
+import com.roadsentinel.roadsentinel_backend_api.services.CloudinaryImageService;
 import com.roadsentinel.roadsentinel_backend_api.services.ComplaintService;
 
 import jakarta.transaction.Transactional;
@@ -31,6 +34,7 @@ public class ComplaintServiceImpl implements ComplaintService {
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final CloudinaryImageService cloudinaryImageService;
 
     @Override
     @Transactional
@@ -42,27 +46,23 @@ public class ComplaintServiceImpl implements ComplaintService {
         complaint.setUser(user);
 
         if (files != null && !files.isEmpty()) {
-            String uploadDir = "uploads/complaints/";
 
             for (MultipartFile file : files) {
                 try {
-                    Path uploadPath = Paths.get(uploadDir);
-                    if (!Files.exists(uploadPath))
-                        Files.createDirectories(uploadPath);
+                    Map uploadResult = cloudinaryImageService.upload(file);
 
-                    String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-                    Path filePath = uploadPath.resolve(fileName);
-
-                    Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                    String imageUrl = (String) uploadResult.get("secure_url");
+                    String publicId = (String) uploadResult.get("public_id");
 
                     Attachment attachment = new Attachment();
-                    attachment.setFileUrl("/uploads/complaints/" + fileName);
-                    attachment.setFileType(file.getContentType());
+                    attachment.setImageUrl(imageUrl);
+                    attachment.setPublicId(publicId);
 
+                    // 🔥 THIS LINE FIXES EVERYTHING
                     complaint.addAttachment(attachment);
 
                 } catch (IOException e) {
-                    throw new RuntimeException("Failed to store file", e);
+                    throw new RuntimeException("Failed to store file " + e.getMessage());
                 }
             }
         }
@@ -91,6 +91,12 @@ public class ComplaintServiceImpl implements ComplaintService {
     public long getTotalComplaints(UUID userId) {
         long total = complaintRepository.countByUserId(userId);
         return total;
+    }
+
+    @Override
+    public long getTotalSuccessedComplaints(UUID userId) {
+        long count = complaintRepository.countByUserIdAndRewardAmountGreaterThanOne(userId);
+        return count;
     }
 
 }

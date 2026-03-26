@@ -15,11 +15,11 @@ public class Attachment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String fileUrl;  // S3 link or local path
-    private String fileType; // e.g., "image/jpeg" or "video/mp4"
+    private String imageUrl;  
+    private String publicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "complain_id")
-    private Complaint complain; // Back-reference to the parent complaint
+    @JoinColumn(name = "complaint_id")
+    private Complaint complaint; 
     
 }

@@ -1238,7 +1238,7 @@ export default function ComplaintForm({ vehicleType = "car", onBack }) {
         <div
           ref={submitRef}
           className="flex flex-col sm:flex-row gap-3 pb-8"
-          style={{ opacity: 0 }}
+          style={{ opacity: 1 }} // ← always visible
         >
           <button
             type="submit"

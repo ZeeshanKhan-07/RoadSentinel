@@ -20,4 +20,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, UUID> {
 
     @Query("SELECT COUNT(c) FROM Complaint c WHERE c.user.id = :userId")
     long countByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(c) FROM Complaint c WHERE c.user.id = :userId AND c.rewardAmount > 1")
+    long countByUserIdAndRewardAmountGreaterThanOne(@Param("userId") UUID userId);
 }
