@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,15 +21,10 @@ import lombok.AllArgsConstructor;
 public class WalletController {
     private final WalletService walletService;
 
-    @PostMapping("/balance")
-    public ResponseEntity<Long> getBalance(@RequestBody Map<String, UUID> request) {
-        UUID userId = request.get("userId");
-
-        if (userId == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Long balance = walletService.getRemainingBalance(userId);
+    @GetMapping("/balance")
+    public ResponseEntity<Long> getBalance(Authentication authentication) {
+        String userEmail = authentication.getName();
+        Long balance = walletService.getRemainingBalanceByEmail(userEmail);
         return ResponseEntity.ok(balance);
     }
 }

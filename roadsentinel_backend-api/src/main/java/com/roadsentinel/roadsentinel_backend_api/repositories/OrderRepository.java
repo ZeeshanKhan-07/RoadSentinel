@@ -12,6 +12,6 @@ import com.roadsentinel.roadsentinel_backend_api.entities.Orders;
 @Repository
 public interface OrderRepository extends JpaRepository<Orders, UUID> {
 
-    @Query("SELECT SUM(o.totalAmount) FROM Orders o WHERE o.user.id = :userId")
-    Long sumTotalAmountByUserId(@Param("userId") UUID userId);
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Orders o WHERE o.user.email = :email")
+    Long sumTotalAmountByUserEmail(@Param("email") String email);
 }
