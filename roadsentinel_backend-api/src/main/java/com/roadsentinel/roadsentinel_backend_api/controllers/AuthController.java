@@ -1,8 +1,11 @@
 package com.roadsentinel.roadsentinel_backend_api.controllers;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
@@ -25,6 +28,7 @@ import com.roadsentinel.roadsentinel_backend_api.dtos.LoginRequest;
 import com.roadsentinel.roadsentinel_backend_api.dtos.RefreshTokenRequest;
 import com.roadsentinel.roadsentinel_backend_api.dtos.TokenResponse;
 import com.roadsentinel.roadsentinel_backend_api.dtos.UserDTO;
+import com.roadsentinel.roadsentinel_backend_api.dtos.VerifyAdminDto;
 import com.roadsentinel.roadsentinel_backend_api.dtos.VerifyUserDTO;
 import com.roadsentinel.roadsentinel_backend_api.entities.RefreshToken;
 import com.roadsentinel.roadsentinel_backend_api.entities.User;
@@ -62,13 +66,35 @@ public class AuthController {
     private final ModelMapper mapper;
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(
+    public ResponseEntity<?> login(
             @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         Authentication authenticate = authenticate(loginRequest);
         User user = userRepository.findByEmail(loginRequest.email())
                 .orElseThrow(() -> new BadCredentialsException("Ivalid email or password"));
         if (!user.isEnable()) {
             throw new DisabledException("User is disabled");
+        }
+
+        Set<String> otpRoles = Set.of("ROLE_PRODUCT_ADMIN", "ROLE_OFFICER");
+
+        boolean requiresOtp = user.getRoles().stream()
+                .map(role -> role.getName())
+                .anyMatch(otpRoles::contains);
+
+        if (requiresOtp) {
+
+            String otp = authService.generateVerificationCode(); // reuse existing
+
+            user.setVerificationCode(otp);
+            user.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(5));
+            userRepository.save(user);
+
+            authService.sendVerificationEmail(modelMapper.map(user, UserDTO.class));
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "requiresOtp", true,
+                            "message", "OTP sent to admin email. Please verify to login."));
         }
 
         String jti = UUID.randomUUID().toString();
@@ -102,6 +128,53 @@ public class AuthController {
         } catch (Exception e) {
             throw new BadCredentialsException("Invalid email or password", e);
         }
+    }
+
+    @PostMapping("/admin/verify-login")
+    public ResponseEntity<TokenResponse> verifyAdminLogin(
+            @RequestBody VerifyAdminDto dto,
+            HttpServletResponse response) {
+
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getVerificationCode() == null ||
+                !user.getVerificationCode().equals(dto.getVerificationCode())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        if (user.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP expired");
+        }
+
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiration(null);
+        userRepository.save(user);
+
+        String jti = UUID.randomUUID().toString();
+
+        var refreshTokenOb = RefreshToken.builder()
+                .jti(jti)
+                .user(user)
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusMillis(jwtService.getRefreshTokenExpiration()))
+                .revoked(false)
+                .build();
+
+        refreshTokenRepository.save(refreshTokenOb);
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user, refreshTokenOb.getJti());
+
+        cookieService.attachRefreshCookie(response, refreshToken, (int) jwtService.getRefreshTokenExpiration());
+        cookieService.addNoStoreHeaders(response);
+
+        return ResponseEntity.ok(
+                TokenResponse.of(
+                        accessToken,
+                        refreshToken,
+                        jwtService.getAccessTokenExpiration(),
+                        modelMapper.map(user, UserDTO.class)));
     }
 
     @PostMapping("/logout")
@@ -232,12 +305,12 @@ public class AuthController {
         try {
             authService.verifyUser(verifyUserDTO);
             return ResponseEntity.ok("Account verified successfully!!");
-        } catch(RuntimeException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @PostMapping("/resend") 
+    @PostMapping("/resend")
     public ResponseEntity<?> resendVerificationCode(@RequestParam String email) {
         try {
             authService.resendVerificationCode(email);

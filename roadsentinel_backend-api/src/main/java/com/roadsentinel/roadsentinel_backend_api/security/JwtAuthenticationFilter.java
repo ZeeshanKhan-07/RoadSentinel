@@ -1,9 +1,9 @@
 package com.roadsentinel.roadsentinel_backend_api.security;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.roadsentinel.roadsentinel_backend_api.helpers.UserHelper;
-import com.roadsentinel.roadsentinel_backend_api.repositories.UserRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -35,19 +34,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
-    private final UserRepository userRepository;
-
     private Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
         logger.info("Authorization header: {}", header);
+
         if (header != null && header.startsWith("Bearer ")) {
-            // Extract the token from the header
+
             String token = header.substring(7);
+
             if (!jwtService.isAccessToken(token)) {
                 filterChain.doFilter(request, response);
                 return;
@@ -56,23 +57,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Jws<Claims> parse = jwtService.parse(token);
                 Claims payload = parse.getPayload();
+
+                // 🔹 Extract data from JWT
                 String userId = payload.getSubject();
+                String email = payload.get("email", String.class);
+                List<String> roles = payload.get("roles", List.class);
+
                 UUID userUuid = UserHelper.parseUUID(userId);
 
-                userRepository.findById(userUuid).ifPresent(user -> {
-                    if (user.isEnabled()) {
-                        List<GrantedAuthority> authorities = user.getRoles() == null ? List.of()
-                                : user.getRoles().stream()
-                                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                                        .collect(Collectors.toList());
+                // 🔹 Convert roles → authorities
+                List<GrantedAuthority> authorities = roles == null ? List.of()
+                        : roles.stream()
+                                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role))
+                                .toList();
 
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                user.getEmail(), null, authorities);
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        if (SecurityContextHolder.getContext().getAuthentication() == null)
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
-                });
+                // 🔹 Create authentication
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        email, null, authorities);
+
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+
+                // 🔹 Set authentication in context
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
 
             } catch (ExpiredJwtException e) {
                 request.setAttribute("error", "Token expired");
@@ -83,17 +92,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (Exception e) {
                 request.setAttribute("error", "Unexpected error occurred");
             }
-
         }
 
         filterChain.doFilter(request, response);
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         return path.startsWith("/api/v1/auth");
     }
-
 }
-

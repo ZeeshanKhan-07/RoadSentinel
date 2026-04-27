@@ -2,6 +2,7 @@ package com.roadsentinel.roadsentinel_backend_api.controllers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +38,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 
-     @DeleteMapping("/{userId}")
+    @DeleteMapping("/{userId}")
     public void deleteUser(@PathVariable("userId") String userId) {
         userService.deleteUser(userId);
     }
@@ -50,5 +51,17 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable("userId") String userId) {
         return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
+    @GetMapping("/checkUserAccess")
+    @PreAuthorize("hasRole('USER') and !hasRole('PRODUCT_ADMIN')")
+    public String checkUserAccess() {
+        return "User has access to this endpoint.";
+    }
+
+    @GetMapping("/admin/check")
+    @PreAuthorize("hasRole('PRODUCT_ADMIN')")
+    public String checkAdminAccess() {
+        return "Admin access granted";
     }
 }
