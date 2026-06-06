@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -30,6 +31,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -49,6 +51,8 @@ public class SecurityConfig {
                         authorizeHttpRequests -> authorizeHttpRequests
                                 .requestMatchers(AppConstants.AUTH_PUBLIC_URLS).permitAll()
                                 .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers("/admin/auth/login").permitAll()
+                                .requestMatchers("/admin/auth/verify-login").permitAll()
                                 .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> 

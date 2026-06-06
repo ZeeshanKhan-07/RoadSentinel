@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -66,7 +67,7 @@ public class AuthController {
     private final ModelMapper mapper;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(
+    public ResponseEntity<TokenResponse> login(
             @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         Authentication authenticate = authenticate(loginRequest);
         User user = userRepository.findByEmail(loginRequest.email())
@@ -75,27 +76,27 @@ public class AuthController {
             throw new DisabledException("User is disabled");
         }
 
-        Set<String> otpRoles = Set.of("ROLE_PRODUCT_ADMIN", "ROLE_OFFICER");
+        // Set<String> otpRoles = Set.of("ROLE_PRODUCT_ADMIN", "ROLE_OFFICER");
 
-        boolean requiresOtp = user.getRoles().stream()
-                .map(role -> role.getName())
-                .anyMatch(otpRoles::contains);
+        // boolean requiresOtp = user.getRoles().stream()
+        //         .map(role -> role.getName())
+        //         .anyMatch(otpRoles::contains); 
 
-        if (requiresOtp) {
+        // if (requiresOtp) {
 
-            String otp = authService.generateVerificationCode(); // reuse existing
+        //     String otp = authService.generateVerificationCode(); // reuse existing
 
-            user.setVerificationCode(otp);
-            user.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(5));
-            userRepository.save(user);
+        //     user.setVerificationCode(otp);
+        //     user.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(5));
+        //     userRepository.save(user);
 
-            authService.sendVerificationEmail(modelMapper.map(user, UserDTO.class));
+        //     authService.sendVerificationEmail(modelMapper.map(user, UserDTO.class));
 
-            return ResponseEntity.ok(
-                    Map.of(
-                            "requiresOtp", true,
-                            "message", "OTP sent to admin email. Please verify to login."));
-        }
+        //     return ResponseEntity.ok(
+        //             Map.of(
+        //                     "requiresOtp", true,
+        //                     "message", "OTP sent to admin email. Please verify to login."));
+        // }
 
         String jti = UUID.randomUUID().toString();
         var refreshTokenOb = RefreshToken.builder()
@@ -130,52 +131,53 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/admin/verify-login")
-    public ResponseEntity<TokenResponse> verifyAdminLogin(
-            @RequestBody VerifyAdminDto dto,
-            HttpServletResponse response) {
+    
+    // @PostMapping("/admin/verify-login")
+    // public ResponseEntity<TokenResponse> verifyAdminLogin(
+    //         @RequestBody VerifyAdminDto dto,
+    //         HttpServletResponse response) {
 
-        User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    //     User user = userRepository.findByEmail(dto.getEmail())
+    //             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getVerificationCode() == null ||
-                !user.getVerificationCode().equals(dto.getVerificationCode())) {
-            throw new RuntimeException("Invalid OTP");
-        }
+    //     if (user.getVerificationCode() == null ||
+    //             !user.getVerificationCode().equals(dto.getVerificationCode())) {
+    //         throw new RuntimeException("Invalid OTP");
+    //     }
 
-        if (user.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("OTP expired");
-        }
+    //     if (user.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
+    //         throw new RuntimeException("OTP expired");
+    //     }
 
-        user.setVerificationCode(null);
-        user.setVerificationCodeExpiration(null);
-        userRepository.save(user);
+    //     user.setVerificationCode(null);
+    //     user.setVerificationCodeExpiration(null);
+    //     userRepository.save(user);
 
-        String jti = UUID.randomUUID().toString();
+    //     String jti = UUID.randomUUID().toString();
 
-        var refreshTokenOb = RefreshToken.builder()
-                .jti(jti)
-                .user(user)
-                .createdAt(Instant.now())
-                .expiresAt(Instant.now().plusMillis(jwtService.getRefreshTokenExpiration()))
-                .revoked(false)
-                .build();
+    //     var refreshTokenOb = RefreshToken.builder()
+    //             .jti(jti)
+    //             .user(user)
+    //             .createdAt(Instant.now())
+    //             .expiresAt(Instant.now().plusMillis(jwtService.getRefreshTokenExpiration()))
+    //             .revoked(false)
+    //             .build();
 
-        refreshTokenRepository.save(refreshTokenOb);
+    //     refreshTokenRepository.save(refreshTokenOb);
 
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user, refreshTokenOb.getJti());
+    //     String accessToken = jwtService.generateAccessToken(user);
+    //     String refreshToken = jwtService.generateRefreshToken(user, refreshTokenOb.getJti());
 
-        cookieService.attachRefreshCookie(response, refreshToken, (int) jwtService.getRefreshTokenExpiration());
-        cookieService.addNoStoreHeaders(response);
+    //     cookieService.attachRefreshCookie(response, refreshToken, (int) jwtService.getRefreshTokenExpiration());
+    //     cookieService.addNoStoreHeaders(response);
 
-        return ResponseEntity.ok(
-                TokenResponse.of(
-                        accessToken,
-                        refreshToken,
-                        jwtService.getAccessTokenExpiration(),
-                        modelMapper.map(user, UserDTO.class)));
-    }
+    //     return ResponseEntity.ok(
+    //             TokenResponse.of(
+    //                     accessToken,
+    //                     refreshToken,
+    //                     jwtService.getAccessTokenExpiration(),
+    //                     modelMapper.map(user, UserDTO.class)));
+    // }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
@@ -294,7 +296,9 @@ public class AuthController {
         return Optional.empty();
     }
 
+
     @PostMapping("/register")
+    // @PreAuthorize("hasRole('USER') and !hasRole('PRODUCT_ADMIN')")
     public ResponseEntity<UserDTO> registerUser(@RequestBody UserDTO userDTO) {
         UserDTO user = authService.registerUser(userDTO);
         return ResponseEntity.ok(user);
