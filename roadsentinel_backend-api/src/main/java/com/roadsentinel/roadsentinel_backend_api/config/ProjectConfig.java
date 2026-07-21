@@ -28,4 +28,5 @@ public class ProjectConfig {
         return new Cloudinary(config);
     }
 
+    
 }

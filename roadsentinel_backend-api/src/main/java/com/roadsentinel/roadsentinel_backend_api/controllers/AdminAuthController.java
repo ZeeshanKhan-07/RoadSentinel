@@ -20,7 +20,6 @@ import com.roadsentinel.roadsentinel_backend_api.dtos.TokenResponse;
 import com.roadsentinel.roadsentinel_backend_api.dtos.UserDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.VerifyAdminDto;
 import com.roadsentinel.roadsentinel_backend_api.entities.RefreshToken;
-import com.roadsentinel.roadsentinel_backend_api.entities.Role;
 import com.roadsentinel.roadsentinel_backend_api.entities.User;
 import com.roadsentinel.roadsentinel_backend_api.repositories.RefreshTokenRepository;
 import com.roadsentinel.roadsentinel_backend_api.repositories.UserRepository;
@@ -57,19 +56,19 @@ public class AdminAuthController {
                 User user = userRepository.findByEmail(loginRequest.email())
                                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
+                boolean isAdmin = user.getRoles().stream()
+                                .anyMatch(role -> role.getName().equals("ROLE_PRODUCT_ADMIN")
+                                                || role.getName().equals("ROLE_OFFICER"));
+
+                if (!isAdmin) {
+                        throw new BadCredentialsException(
+                                        "Please login through the user portal.");
+                }
+
                 if (!user.isEnable()) {
                         throw new DisabledException("User is disabled");
                 }
 
-                boolean isAdmin = user.getRoles()
-                                .stream()
-                                .anyMatch(role -> "ROLE_PRODUCT_ADMIN".equals(role.getName()));
-
-                if (!isAdmin) {
-                        throw new BadCredentialsException("Access denied. Admin privileges required.");
-                }
-
-                // Generate OTP
                 String otp = authService.generateVerificationCode();
 
                 user.setVerificationCode(otp);

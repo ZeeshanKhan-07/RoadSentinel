@@ -19,6 +19,7 @@ import com.roadsentinel.roadsentinel_backend_api.dtos.ComplaintDTO;
 import com.roadsentinel.roadsentinel_backend_api.entities.Attachment;
 import com.roadsentinel.roadsentinel_backend_api.entities.Complaint;
 import com.roadsentinel.roadsentinel_backend_api.entities.User;
+import com.roadsentinel.roadsentinel_backend_api.enums.Status;
 import com.roadsentinel.roadsentinel_backend_api.repositories.ComplaintRepository;
 import com.roadsentinel.roadsentinel_backend_api.repositories.UserRepository;
 import com.roadsentinel.roadsentinel_backend_api.services.CloudinaryImageService;
@@ -97,6 +98,44 @@ public class ComplaintServiceImpl implements ComplaintService {
     public long getTotalSuccessedComplaints(UUID userId) {
         long count = complaintRepository.countByUserIdAndRewardAmountGreaterThanOne(userId);
         return count;
+    }
+
+    @Override
+    @Transactional
+    public ComplaintDTO updateComplaintStatus(UUID complaintId, Status status) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found with ID: " + complaintId));
+
+        complaint.setStatus(status); // Assumes you have setStatus() in your Complaint entity
+
+        Complaint updatedComplaint = complaintRepository.save(complaint);
+
+        ComplaintDTO dto = modelMapper.map(updatedComplaint, ComplaintDTO.class);
+        if (updatedComplaint.getUser() != null) {
+            dto.setUserId(updatedComplaint.getUser().getId());
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public ComplaintDTO assignReward(UUID complaintId, Integer rewardAmount) {
+        if (rewardAmount == null || rewardAmount < 0) {
+            throw new IllegalArgumentException("Reward amount must be positive");
+        }
+
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found with ID: " + complaintId));
+
+        complaint.setRewardAmount(rewardAmount); 
+
+        Complaint updatedComplaint = complaintRepository.save(complaint);
+
+        ComplaintDTO dto = modelMapper.map(updatedComplaint, ComplaintDTO.class);
+        if (updatedComplaint.getUser() != null) {
+            dto.setUserId(updatedComplaint.getUser().getId());
+        }
+        return dto;
     }
 
 }

@@ -8,7 +8,7 @@ const AdminRoleProtectedRoute = ({ children, allowedRoles }) => {
   );
 
   if (!isLoggedIn) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/admin/auth/login" replace />;
   }
 
   const hasAccess = admin?.roles?.some((role) =>

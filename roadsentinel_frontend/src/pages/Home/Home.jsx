@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Hero from "../../components/Hero/Hero";
 import { AuthModal } from "../../components/Navbar/Navbar";
+import About from "../../components/About/About";
 
 const Home = () => {
 
@@ -17,6 +18,7 @@ const Home = () => {
   return (
     <div className="min-h-screen w-full" style={{ background: "#080808" }}>
       <Hero openAuth={openAuth} />
+      <About />
 
       {authModal && (
         <AuthModal

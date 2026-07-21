@@ -9,11 +9,10 @@ import StorePage from "./pages/Store/StorePage";
 import ComplaintsPage from "./pages/Complaints/ComplaintsPage";
 import OrderForm from "./pages/Order/OrderForm";
 import AdminLoginPage from "./pages/Admins/Admin/AdminLoginPage";
-import AdminOtpVerification from "./pages/Admins/Admin/AdminOtpVerification";
 import AdminRoleProtectedRoute from "./routes/AdminRoleProtectedRoute";
 import AdminDashboard from "./pages/Admins/Admin/AdminDashboard";
 import AppLayout from "./layout/AppLayout";
-
+import ProductAdminPage from "./pages/Admins/Admin/ProductAdminPage";
 function App() {
   return (
     <>
@@ -54,11 +53,10 @@ function App() {
         </Route>
 
         {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/verify-otp" element={<AdminOtpVerification />} />
+        <Route path="/admin/auth/login" element={<AdminLoginPage />} />
 
         <Route
-          path="/admin/product/dashboard"
+          path="/admin/product-admin/dashboard"
           element={
             <AdminRoleProtectedRoute
               allowedRoles={["ROLE_PRODUCT_ADMIN"]}
@@ -67,6 +65,8 @@ function App() {
             </AdminRoleProtectedRoute>
           }
         />
+
+        <Route path='/admin/product/dashboard' element={<ProductAdminPage />} />
       </Routes>
     </>
   );

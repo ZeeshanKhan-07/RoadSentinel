@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.cloudinary.Cloudinary;
+import com.roadsentinel.roadsentinel_backend_api.dtos.OrderStatus;
+import com.roadsentinel.roadsentinel_backend_api.dtos.ProductBarChartDTO;
+import com.roadsentinel.roadsentinel_backend_api.dtos.ProductDashboardMetricsDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductRequestDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductResponseDTO;
+import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderStatusMetricDTO;
 import com.roadsentinel.roadsentinel_backend_api.entities.ProductImage;
 import com.roadsentinel.roadsentinel_backend_api.entities.Products;
 import com.roadsentinel.roadsentinel_backend_api.repositories.ProductRepository;
@@ -98,7 +101,7 @@ public class ProductServiceImpl implements ProductService {
         if (files == null)
             return imageList;
 
-        for(MultipartFile file : files) {
+        for (MultipartFile file : files) {
             try {
                 Map uploadResult = cloudinaryImageService.upload(file);
                 String imageUrl = (String) uploadResult.get("secure_url");
@@ -148,5 +151,26 @@ public class ProductServiceImpl implements ProductService {
         response.setImages(imageUrls);
 
         return response;
+    }
+
+    @Override
+    public ProductDashboardMetricsDTO getDashboardMetrics() {
+        long totalUnique = productRepository.countUniqueProducts();
+
+        long soldCount = productRepository.countProductsByOrderStatus(OrderStatus.DELIVERED);
+
+        long toBeDeliveredCount = productRepository.countProductsByOrderStatus(OrderStatus.CONFIRMED);
+
+        return new ProductDashboardMetricsDTO(totalUnique, soldCount, toBeDeliveredCount);
+    }
+
+    @Override
+    public List<ProductBarChartDTO> getProductsForBarChart() {
+        return productRepository.fetchBarChartMetrics();
+    }
+
+    @Override
+    public List<OrderStatusMetricDTO> getOrderStatusForCircularChart() {
+        return productRepository.fetchOrderStatusMetrics();
     }
 }

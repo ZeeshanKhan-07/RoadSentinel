@@ -5,6 +5,18 @@ import toast from "react-hot-toast";
 import { gsap } from "gsap";
 import Login from "../../pages/login/login";
 import Register from "../../pages/register/register";
+
+// Maps nav label -> the DOM id of the section it should scroll to.
+// Make sure each target section actually has this id, e.g. <section id="about">
+const SECTION_IDS = {
+  About: "about",
+  "How to use?": "how-to-use",
+  Contact: "contact",
+  Reviews: "reviews",
+};
+
+const NAV_HEIGHT = 56; // matches the fixed navbar height below, used as scroll offset
+
 function LogoIcon({ size = 32 }) {
   return (
     <div
@@ -75,7 +87,6 @@ export function AuthModal({ mode, onClose, onSwitch }) {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    // Animate IN
     gsap.fromTo(
       overlayRef.current,
       { opacity: 0 },
@@ -138,7 +149,6 @@ export function AuthModal({ mode, onClose, onSwitch }) {
           boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
         }}
       >
-        {/* Close button */}
         <button
           onClick={handleClose}
           style={{
@@ -190,7 +200,7 @@ export function AuthModal({ mode, onClose, onSwitch }) {
 function MobileDrawer({
   navLinks,
   activeLink,
-  setActiveLink,
+  onNavClick,
   onClose,
   onOpenAuth,
 }) {
@@ -226,6 +236,13 @@ function MobileDrawer({
     });
   };
 
+  const handleLinkClick = (link) => {
+    // close the drawer first, then scroll — feels smoother than scrolling
+    // behind an open overlay
+    handleClose();
+    setTimeout(() => onNavClick(link), 320);
+  };
+
   return (
     <div
       ref={drawerRef}
@@ -251,10 +268,7 @@ function MobileDrawer({
             className="w-full text-center"
           >
             <button
-              onClick={() => {
-                setActiveLink(link);
-                handleClose();
-              }}
+              onClick={() => handleLinkClick(link)}
               className={`w-full py-3.5 text-base font-medium transition-colors duration-200 cursor-pointer ${activeLink === link ? "text-white" : "text-white/40 hover:text-white/80"}`}
             >
               {link}
@@ -312,23 +326,54 @@ export default function Navbar() {
   const navLinks = ["About", "How to use?", "Contact", "Reviews"];
 
   const location = useLocation();
-
   const navigate = useNavigate();
   const isLoggedIn = useAuth((state) => state.authStatus);
   const user = useAuth((state) => state.user);
   const logout = useAuth((state) => state.logout);
 
+  // Scrolls to a section on the current page. If the section isn't present
+  // (e.g. we're on /store or /profile, not on the home page), it navigates
+  // home first and passes along which section to scroll to once we land.
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - NAV_HEIGHT;
+      window.scrollTo({ top, behavior: "smooth" });
+    } else {
+      navigate("/", { state: { scrollTo: id } });
+    }
+  };
+
+  const handleNavClick = (link) => {
+    setActiveLink(link);
+    scrollToSection(SECTION_IDS[link]);
+  };
+
   useEffect(() => {
     // 1. Only run if we have the 'triggerLogin' flag and user isn't logged in
     if (location.state?.triggerLogin && !isLoggedIn) {
-      // 2. Open the modal
       setAuthModal("login");
-
-      // 3. IMPORTANT: Wipe the state immediately!
-      // This changes the URL state to {} so a refresh won't find 'triggerLogin'
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, isLoggedIn, navigate]);
+
+  useEffect(() => {
+    // Handles the "navigated home to reach a section" case: once we're back
+    // on the home route with a pending scrollTo target, wait a tick for the
+    // page to render, then scroll to it and clear the state.
+    if (location.state?.scrollTo) {
+      const id = location.state.scrollTo;
+      const timer = setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - NAV_HEIGHT;
+          window.scrollTo({ top, behavior: "smooth" });
+        }
+        navigate(location.pathname, { replace: true, state: {} });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location, navigate]);
 
   const handleLogOut = () => {
     toast.success("Successfully logged out!");
@@ -409,7 +454,7 @@ export default function Navbar() {
           {navLinks.map((link, i) => (
             <li key={link} ref={(el) => (linksRef.current[i] = el)}>
               <button
-                onClick={() => setActiveLink(link)}
+                onClick={() => handleNavClick(link)}
                 className={`px-3.5 py-1.5 text-sm font-medium rounded transition-all duration-200 cursor-pointer ${activeLink === link ? "bg-white/15 text-white" : "text-white/50 hover:text-white/85"}`}
               >
                 {link}
@@ -420,7 +465,6 @@ export default function Navbar() {
 
         {/* Desktop right actions */}
         <div className="hidden min-[900px]:flex items-center gap-6">
-          {/* Store button always visible */}
           <button
             ref={(el) => (actionsRef.current[0] = el)}
             onClick={() => navigate("/store")}
@@ -431,15 +475,12 @@ export default function Navbar() {
 
           {isLoggedIn ? (
             <div className="relative group">
-              {/* Circular Profile Button */}
               <button
                 onClick={() => navigate("/profile")}
                 className="flex items-center justify-center w-9 h-9 rounded-full border border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-all duration-200"
               >
                 <ProfileIcon />
               </button>
-
-              {/* Hover Tooltip */}
               <span
                 className="
         absolute -bottom-7 left-1/2 -translate-x-1/2
@@ -504,7 +545,7 @@ export default function Navbar() {
         <MobileDrawer
           navLinks={navLinks}
           activeLink={activeLink}
-          setActiveLink={setActiveLink}
+          onNavClick={handleNavClick}
           onClose={() => setMenuOpen(false)}
           onOpenAuth={openAuth}
         />

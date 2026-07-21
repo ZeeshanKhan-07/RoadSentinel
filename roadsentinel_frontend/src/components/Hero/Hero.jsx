@@ -92,6 +92,7 @@ export default function Hero({openAuth}) {
 
   return (
     <section
+      id="hero"
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       style={{ background: "#080808" }}
     >

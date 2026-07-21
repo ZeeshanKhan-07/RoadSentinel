@@ -1,33 +1,32 @@
-const BASE_URL = "http://localhost:8080/admin/auth";
+import axios from "axios";
 
-export const adminLogin = async (email, password) => {
-  const response = await fetch(`${BASE_URL}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+const API_URL = "http://localhost:8080/admin/auth";
 
-  const data = await response.json();
+/**
+ * Step 1 — email + password.
+ */
+export const adminLogin = async ({ email, password }) => {
+  const response = await axios.post(
+    `${API_URL}/login`,
+    { email, password },
+    { withCredentials: true }
+  );
 
-  if (!response.ok) {
-    throw new Error(data.message || "Login failed");
-  }
-
-  return data; 
+  return response.data;
 };
 
-export const verifyAdminOtp = async (email, verificationCode) => {
-  const response = await fetch(`${BASE_URL}/verify-login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, verificationCode }),
-  });
+/**
+ * Step 2 — email + verificationCode.
+ */
+export const verifyAdminLoginOtp = async ({
+  email,
+  verificationCode,
+}) => {
+  const response = await axios.post(
+    `${API_URL}/verify-login`,
+    { email, verificationCode },
+    { withCredentials: true }
+  );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "OTP verification failed");
-  }
-
-  return data; 
+  return response.data;
 };

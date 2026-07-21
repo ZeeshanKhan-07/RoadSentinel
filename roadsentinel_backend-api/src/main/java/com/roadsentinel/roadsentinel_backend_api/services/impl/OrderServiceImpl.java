@@ -1,15 +1,19 @@
 package com.roadsentinel.roadsentinel_backend_api.services.impl;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.roadsentinel.roadsentinel_backend_api.dtos.OrderStatus;
 import com.roadsentinel.roadsentinel_backend_api.dtos.order.AddressRequestDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderItemRequestDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderRequestDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderResponseDTO;
+import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderStatusUpdateResponseDTO;
 import com.roadsentinel.roadsentinel_backend_api.entities.Address;
 import com.roadsentinel.roadsentinel_backend_api.entities.OrderItem;
 import com.roadsentinel.roadsentinel_backend_api.entities.Orders;
@@ -93,6 +97,24 @@ public class OrderServiceImpl implements OrderService {
         Orders savedOrder = orderRepository.save(order);
 
         return orderMapper.mapToResponse(savedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderStatusUpdateResponseDTO updateOrderStatus(UUID orderId, OrderStatus newStatus) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+
+        order.setStatus(newStatus);
+
+        Orders updatedOrder = orderRepository.save(order);
+
+        OrderStatusUpdateResponseDTO response = new OrderStatusUpdateResponseDTO();
+        response.setOrderId(updatedOrder.getId());
+        response.setStatus(updatedOrder.getStatus());
+        response.setUpdatedAt(Instant.now()); 
+
+        return response;
     }
 
 }

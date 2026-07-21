@@ -1,180 +1,357 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { gsap } from "gsap";
-import { adminLogin } from "../../../services/adminAuthService";
-import loginPageImage from "../../../assets/images/Admin/loginPageImage.png";
+import gsap from "gsap";
+import { adminLogin, verifyAdminLoginOtp } from "../../../services/adminAuthService";
+import useAdminAuth, { getDashboardPath } from "../../../auth/useAdminAuth";
+import workingAdminIllustration from "../../../assets/images/Admin/AdminWorking.svg";
 
-export default function AdminLoginPage() {
+const OTP_LENGTH = 6;
+
+export default function AdminLogin() {
+  const navigate = useNavigate();
+  const loginAdmin = useAdminAuth((s) => s.loginAdmin);
+
+  // "credentials" -> "otp"
+  const [step, setStep] = useState("credentials");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
+  const otpRefs = useRef([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  const leftRef = useRef(null);
-  const rightRef = useRef(null);
+  const leftPanelRef = useRef(null);
+  const rightPanelRef = useRef(null);
+  const lineRef = useRef(null);
+  const illustrationRef = useRef(null);
   const formRef = useRef(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Left panel slides in from left
-      gsap.fromTo(
-        leftRef.current,
-        { x: -60, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.9, ease: "power3.out" }
-      );
+  // ---- Page load-in animation: corner accent draws in, illustration
+  // card settles into place, then gently floats (signature moment) ----
+  useLayoutEffect(() => {
+    const line = lineRef.current;
+    const length = line.getTotalLength();
+    gsap.set(line, { strokeDasharray: length, strokeDashoffset: length });
 
-      // Right image fades + scales in
-      gsap.fromTo(
-        rightRef.current,
-        { x: 60, opacity: 0, scale: 0.95 },
-        { x: 0, opacity: 1, scale: 1, duration: 1, ease: "power3.out", delay: 0.15 }
-      );
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    tl.fromTo(
+      leftPanelRef.current,
+      { autoAlpha: 0, x: -24 },
+      { autoAlpha: 1, x: 0, duration: 0.6 }
+    )
+      .to(line, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.15)
+      .fromTo(
+        illustrationRef.current,
+        { autoAlpha: 0, scale: 0.92, y: 16 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.6, ease: "back.out(1.4)" },
+        0.3
+      )
+      .fromTo(
+        rightPanelRef.current,
+        { autoAlpha: 0, x: 24 },
+        { autoAlpha: 1, x: 0, duration: 0.6 },
+        0.1
+      )
+      .add(() => {
+        // gentle idle float, kept subtle on purpose
+        gsap.to(illustrationRef.current, {
+          y: -10,
+          duration: 2.4,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+      });
 
-      // Stagger form children
-      gsap.fromTo(
-        formRef.current?.children,
-        { y: 24, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.1,
-          duration: 0.6,
-          ease: "power2.out",
-          delay: 0.3,
-        }
-      );
-    });
-
-    return () => ctx.revert();
+    return () => tl.kill();
   }, []);
 
-  const handleSubmit = async (e) => {
+  // ---- Crossfade whenever the step changes (credentials <-> otp) ----
+  useEffect(() => {
+    if (!formRef.current) return;
+    gsap.fromTo(
+      formRef.current,
+      { autoAlpha: 0, y: 12 },
+      { autoAlpha: 1, y: 0, duration: 0.45, ease: "power2.out" }
+    );
+  }, [step]);
+
+  // ---- Resend cooldown ticker ----
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
+
+  const shakeForm = () => {
+    if (!formRef.current) return;
+    gsap.fromTo(
+      formRef.current,
+      { x: -8 },
+      { x: 0, duration: 0.4, ease: "elastic.out(1, 0.3)" }
+    );
+  };
+
+  // ---- Step 1: submit email + password ----
+  const handleCredentialsSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      shakeForm();
+      return;
+    }
+
     setLoading(true);
-
-    // Button press animation
-    gsap.to(e.currentTarget.querySelector("button[type=submit]"), {
-      scale: 0.96,
-      duration: 0.1,
-      yoyo: true,
-      repeat: 1,
-    });
-
     try {
-      const data = await adminLogin(email, password);
-      if (data.requiresOtp) {
-        navigate("/admin/verify-otp", { state: { email } });
-      }
+      await adminLogin({ email, password });
+      setStep("otp");
+      setResendCooldown(30);
+      setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err) {
-      setError(err.message);
-      // Shake the form on error
-      gsap.fromTo(
-        formRef.current,
-        { x: -8 },
-        { x: 0, duration: 0.4, ease: "elastic.out(1, 0.3)" }
+      setError(
+        err?.response?.data?.message ||
+          "Invalid email or password. Please try again."
       );
+      shakeForm();
     } finally {
       setLoading(false);
     }
   };
 
+  // ---- OTP box handling ----
+  const handleOtpChange = (index, value) => {
+    const digit = value.replace(/[^0-9]/g, "").slice(-1);
+    const next = [...otp];
+    next[index] = digit;
+    setOtp(next);
+
+    if (digit && index < OTP_LENGTH - 1) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
+    if (!pasted) return;
+    e.preventDefault();
+    const next = Array(OTP_LENGTH).fill("");
+    pasted
+      .slice(0, OTP_LENGTH)
+      .split("")
+      .forEach((d, i) => (next[i] = d));
+    setOtp(next);
+    otpRefs.current[Math.min(pasted.length, OTP_LENGTH - 1)]?.focus();
+  };
+
+  // ---- Step 2: submit OTP, then role-based redirect ----
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const verificationCode = otp.join("");
+    if (verificationCode.length !== OTP_LENGTH) {
+      setError("Please enter the full 6-digit code.");
+      shakeForm();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await verifyAdminLoginOtp({ email, verificationCode });
+      loginAdmin(data);
+      navigate(getDashboardPath(data.user), { replace: true });
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          "That code didn't work. Please check and try again."
+      );
+      shakeForm();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setError("");
+    try {
+      await adminLogin({ email, password });
+      setResendCooldown(30);
+    } catch (err) {
+      setError("Couldn't resend the code. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white flex">
-      {/* ── LEFT PANEL ── */}
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#4A4A4A] overflow-hidden">
+      {/* ---------------- Left illustration panel ---------------- */}
       <div
-        ref={leftRef}
-        className="flex flex-col justify-center px-10 md:px-16 lg:px-24 w-full md:w-1/2 relative"
+        ref={leftPanelRef}
+        className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden px-12 py-12"
       >
-        {/* Accent bar */}
-        <div className="absolute top-12 left-10 md:left-16 lg:left-24 w-8 h-1 bg-violet-500 rounded-full" />
+        {/* Short corner accent instead of a full-height diagonal */}
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 508 568"
+          preserveAspectRatio="none"
+        >
+          <line
+            ref={lineRef}
+            x1="383"
+            y1="90"
+            x2="508"
+            y2="0"
+            stroke="rgba(255,255,255,0.28)"
+            strokeWidth="1.5"
+          />
+        </svg>
 
-        <div className="mt-10">
-          <h1 className="text-2xl font-semibold text-gray-800 mb-8 tracking-tight">
-            Login as a Admin User
-          </h1>
-
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 max-w-sm">
-            {/* Email */}
-            <div className="relative">
-              <input
-                type="email"
-                placeholder="johndoe@xyz.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full border border-gray-200 rounded-full px-5 py-3 pr-12 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-                </svg>
-              </span>
-            </div>
-
-            {/* Password */}
-            <div className="relative">
-              <input
-                type="password"
-                placeholder="••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full border border-gray-200 rounded-full px-5 py-3 pr-12 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </span>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <p className="text-red-500 text-xs px-1">{error}</p>
-            )}
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-violet-500 hover:bg-violet-600 disabled:bg-violet-300 text-white font-semibold tracking-widest text-sm rounded-full py-3 transition-colors duration-200"
-            >
-              {loading ? "Please wait..." : "LOGIN"}
-            </button>
-
-            {/* Forgot */}
-            <div className="text-center pt-1">
-              <p className="text-sm text-gray-500">Forget your password?</p>
-              <a href="#" className="text-sm text-violet-500 hover:text-violet-700 font-medium transition-colors">
-                Get help Signed in.
-              </a>
-            </div>
-          </form>
+        <div
+          ref={illustrationRef}
+          className="relative z-10 flex w-full max-w-md items-center justify-center rounded-[32px] bg-[#6b6b6b] p-10 shadow-2xl"
+        >
+          <img
+            src={workingAdminIllustration}
+            alt="Illustration of an admin working at a desk"
+            className="w-full max-w-xs"
+          />
         </div>
-
-        {/* Footer */}
-        <p className="absolute bottom-8 left-10 md:left-16 lg:left-24 text-xs text-gray-400">
-          Terms of use. Privacy policy
-        </p>
       </div>
 
-      {/* ── RIGHT PANEL ── */}
+      {/* ---------------- Right form panel ---------------- */}
       <div
-        ref={rightRef}
-        className="hidden md:flex w-1/2 items-center justify-center bg-white"
+        ref={rightPanelRef}
+        className="flex flex-1 items-center justify-center bg-[#555555] px-6 py-12 sm:px-12"
       >
-        <img
-          src={loginPageImage}
-          alt="Admin Login"
-          className="w-full h-full object-contain max-w-lg"
-          onError={(e) => {
-            // Fallback gracefully if image path not yet wired
-            e.currentTarget.style.opacity = "0.15";
-          }}
-        />
+        <div className="w-full max-w-md">
+          <h2 className="text-center font-serif text-4xl text-white">
+            Admin Login
+          </h2>
+          <p className="mt-3 text-sm text-center font-serif text-gray-300">
+            {step === "credentials"
+              ? "Manage products, orders, and challans."
+              : `Enter the 6-digit code we sent to ${email}.`}
+          </p>
+
+          {error && (
+            <div className="mt-5 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2.5 text-sm text-red-200">
+              {error}
+            </div>
+          )}
+
+          {/* -------- Step 1: credentials -------- */}
+          {step === "credentials" && (
+            <form
+              ref={formRef}
+              onSubmit={handleCredentialsSubmit}
+              className="mt-6"
+            >
+              <label className="mb-1.5 block font-serif text-sm text-gray-200">
+                Email
+              </label>
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className="w-full rounded-lg bg-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-500 outline-none ring-0 transition focus:bg-white focus:ring-2 focus:ring-gray-900/20"
+              />
+
+              <label className="mb-1.5 mt-5 block font-serif text-sm text-gray-200">
+                Password
+              </label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg bg-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-500 outline-none ring-0 transition focus:bg-white focus:ring-2 focus:ring-gray-900/20"
+              />
+
+              {/* space + slight divider before the Sign In button */}
+              <div className="mt-8 mb-6 h-px w-full bg-gray-400/30" />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-black/70 py-3.5 text-sm font-serif text-white transition hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Signing in..." : "Sign In"}
+              </button>
+            </form>
+          )}
+
+          {/* -------- Step 2: OTP -------- */}
+          {step === "otp" && (
+            <form ref={formRef} onSubmit={handleOtpSubmit} className="mt-6">
+              <label className="mb-3 block text-sm text-gray-200">
+                Verification Code
+              </label>
+              <div className="flex justify-between gap-2" onPaste={handleOtpPaste}>
+                {otp.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => (otpRefs.current[i] = el)}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(i, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                    inputMode="numeric"
+                    maxLength={1}
+                    className="h-14 w-12 rounded-lg bg-gray-200 text-center text-lg font-semibold text-gray-900 outline-none transition focus:bg-white focus:ring-2 focus:ring-gray-900/20 sm:w-14"
+                  />
+                ))}
+              </div>
+
+              <div className="mt-8 mb-6 h-px w-full bg-gray-400/30" />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-black/70 py-3.5 text-sm font-medium text-white transition hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Verifying..." : "Verify & Continue"}
+              </button>
+
+              <div className="mt-5 flex items-center justify-between text-sm text-gray-300">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("credentials");
+                    setError("");
+                    setOtp(Array(OTP_LENGTH).fill(""));
+                  }}
+                  className="hover:text-white"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0}
+                  className="font-medium text-white hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline"
+                >
+                  {resendCooldown > 0
+                    ? `Resend code in ${resendCooldown}s`
+                    : "Resend code"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
