@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.cloudinary.Cloudinary;
@@ -63,20 +64,57 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponseDTO updateProduct(UUID id, ProductRequestDTO productRequestDTO) {
 
         Products product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        modelMapper.map(productRequestDTO, product);
+        // 1. Partial updates for text & number fields (Only update if provided)
+        if (productRequestDTO.getName() != null && !productRequestDTO.getName().isBlank()) {
+            product.setName(productRequestDTO.getName());
+        }
 
-        deleteImagesFromStorage(product);
+        if (productRequestDTO.getDescription() != null && !productRequestDTO.getDescription().isBlank()) {
+            product.setDescription(productRequestDTO.getDescription());
+        }
 
-        product.getImages().clear();
+        if (productRequestDTO.getQuantity() > 0) {
+            product.setQuantity(productRequestDTO.getQuantity());
+        }
 
-        List<ProductImage> newImages = saveImages(productRequestDTO.getImages(), product);
+        if (productRequestDTO.getPrice() > 0) {
+            product.setPrice(productRequestDTO.getPrice());
+        }
 
-        product.setImages(newImages);
+        // 2. Partial updates for Enums
+        if (productRequestDTO.getProductVehicleCategory() != null
+                && !productRequestDTO.getProductVehicleCategory().isBlank()) {
+            product.setProductVehicleCategory(
+                    com.roadsentinel.roadsentinel_backend_api.enums.ProductVehicleCategory.valueOf(
+                            productRequestDTO.getProductVehicleCategory().toUpperCase()));
+        }
+
+        if (productRequestDTO.getProductGenderCategory() != null
+                && !productRequestDTO.getProductGenderCategory().isBlank()) {
+            product.setProductGenderCategory(
+                    com.roadsentinel.roadsentinel_backend_api.enums.ProductGenderCategory.valueOf(
+                            productRequestDTO.getProductGenderCategory().toUpperCase()));
+        }
+
+        // 3. ONLY update/clear images if NEW image files are uploaded
+        if (productRequestDTO.getImages() != null && !productRequestDTO.getImages().isEmpty()) {
+
+            // Delete old images
+            deleteImagesFromStorage(product);
+
+            // Clear old image list
+            product.getImages().clear();
+
+            // Save new images
+            List<ProductImage> newImages = saveImages(productRequestDTO.getImages(), product);
+            product.getImages().addAll(newImages);
+        }
 
         Products updatedProduct = productRepository.save(product);
 
@@ -120,21 +158,17 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void deleteImagesFromStorage(Products product) {
-
         if (product.getImages() == null)
             return;
 
         for (ProductImage img : product.getImages()) {
             try {
-                String fileName = img.getImageUrl()
-                        .replace("/uploads/productImages/", "");
-
-                Path path = Paths.get("uploads", "productImages", fileName);
-
-                Files.deleteIfExists(path);
-
-            } catch (IOException e) {
-                e.printStackTrace();
+                // Delete image from Cloudinary using its public_id
+                if (img.getPublicId() != null && !img.getPublicId().isBlank()) {
+                    cloudinary.uploader().destroy(img.getPublicId(), Map.of());
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to delete image from Cloudinary: " + e.getMessage());
             }
         }
     }

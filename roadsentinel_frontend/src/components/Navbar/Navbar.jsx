@@ -16,6 +16,7 @@ const SECTION_IDS = {
 };
 
 const NAV_HEIGHT = 56; // matches the fixed navbar height below, used as scroll offset
+const SOLIDIFY_AT = 40; // px scrolled before the navbar picks up a solid background
 
 function LogoIcon({ size = 32 }) {
   return (
@@ -248,7 +249,9 @@ function MobileDrawer({
       ref={drawerRef}
       className="fixed inset-0 z-40 flex flex-col"
       style={{
-        background: "#0a0a0a",
+        // Mobile drawer stays solid regardless of scroll state — it's a
+        // full-screen overlay, not something the hero video shows through.
+        background: "#05070a",
         paddingTop: "56px",
         fontFamily: "'Inter', sans-serif",
       }}
@@ -322,6 +325,7 @@ export default function Navbar() {
   const [activeLink, setActiveLink] = useState("Templates");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authModal, setAuthModal] = useState(null); // "login" | "register" | null
+  const [scrolled, setScrolled] = useState(false);
 
   const navLinks = ["About", "How to use?", "Contact", "Reviews"];
 
@@ -423,15 +427,35 @@ export default function Navbar() {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // Navbar is transparent over the hero (so the background video shows
+  // full-screen, edge to edge, with nothing cutting off its top strip),
+  // then picks up a solid + blurred background once the page is scrolled
+  // past the hero, so nav links stay legible over whatever content follows.
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > SOLIDIFY_AT);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <>
       <nav
         ref={navRef}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 border-b border-white/10"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 border-b"
         style={{
-          background: "#0a0a0a",
-          height: "56px",
+          height: `${NAV_HEIGHT}px`,
           fontFamily: "'Inter', sans-serif",
+          background: scrolled ? "rgba(5,7,10,0.85)" : "transparent",
+          backdropFilter: scrolled ? "blur(10px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(10px)" : "none",
+          borderBottomColor: scrolled
+            ? "rgba(255,255,255,0.1)"
+            : "transparent",
+          transition:
+            "background 0.35s ease, border-color 0.35s ease, backdrop-filter 0.35s ease",
         }}
       >
         {/* Logo */}
@@ -442,7 +466,7 @@ export default function Navbar() {
         >
           <LogoIcon />
           <span
-            className="text-white font-bold"
+            className="text-white font-display"
             style={{ fontSize: "1.1rem", letterSpacing: "-0.01em" }}
           >
             RoadSentinel
@@ -455,7 +479,7 @@ export default function Navbar() {
             <li key={link} ref={(el) => (linksRef.current[i] = el)}>
               <button
                 onClick={() => handleNavClick(link)}
-                className={`px-3.5 py-1.5 text-sm font-medium rounded transition-all duration-200 cursor-pointer ${activeLink === link ? "bg-white/15 text-white" : "text-white/50 hover:text-white/85"}`}
+                className={`px-3.5 py-1.5 text-sm font-display rounded transition-all duration-200 cursor-pointer ${activeLink === link ? "bg-white/15 text-white" : "text-white/50 hover:text-white/85 hover:mb-3"}`}
               >
                 {link}
               </button>
@@ -468,7 +492,7 @@ export default function Navbar() {
           <button
             ref={(el) => (actionsRef.current[0] = el)}
             onClick={() => navigate("/store")}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium rounded border border-white/30 text-white hover:border-white/55 hover:bg-white/5 transition-all duration-200 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm hover:px-4 hover:py-2 font-display rounded border border-white/30 text-white hover:border-white/55 hover:bg-white/5 transition-all duration-200 cursor-pointer"
           >
             <CartIcon /> Store
           </button>
@@ -477,7 +501,7 @@ export default function Navbar() {
             <div className="relative group">
               <button
                 onClick={() => navigate("/profile")}
-                className="flex items-center justify-center w-9 h-9 rounded-full border border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-all duration-200"
+                className="flex items-center justify-center w-9 h-9 rounded-full cursor-pointer border border-white/30 text-white hover:border-white/60 hover:bg-white/10 transition-all duration-200"
               >
                 <ProfileIcon />
               </button>
@@ -498,14 +522,14 @@ export default function Navbar() {
             <>
               <button
                 onClick={() => openAuth("login")}
-                className="px-3.5 py-1.5 text-sm font-medium rounded text-white/65 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer"
+                className="px-3.5 py-1.5 underline text-sm font-display rounded text-white/65 hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer"
               >
                 Sign in
               </button>
 
               <button
                 onClick={() => openAuth("register")}
-                className="px-3.5 py-1.5 text-sm font-medium rounded bg-white text-black hover:bg-white/90 transition-all duration-200 cursor-pointer"
+                className="px-3.5 py-1.5 hover:px-4 hover:py-2 text-sm font-display rounded bg-white text-black hover:bg-white/90 transition-all duration-200 cursor-pointer"
               >
                 Create Account
               </button>

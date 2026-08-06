@@ -1,32 +1,18 @@
-import axios from "axios";
+import apiClient from "../config/ApiClient";
 
-const API_URL = "http://localhost:8080/admin/auth";
-
-/**
- * Step 1 — email + password.
- */
 export const adminLogin = async ({ email, password }) => {
-  const response = await axios.post(
-    `${API_URL}/login`,
-    { email, password },
-    { withCredentials: true }
-  );
-
+  const response = await apiClient.post("/admin/auth/login", {
+    email,
+    password,
+  });
   return response.data;
 };
 
-/**
- * Step 2 — email + verificationCode.
- */
-export const verifyAdminLoginOtp = async ({
-  email,
-  verificationCode,
-}) => {
-  const response = await axios.post(
-    `${API_URL}/verify-login`,
-    { email, verificationCode },
-    { withCredentials: true }
-  );
 
+export const verifyAdminLoginOtp = async ({ email, verificationCode }) => {
+  const response = await apiClient.post("/admin/auth/verify-login", {
+    email,
+    verificationCode,
+  });
   return response.data;
 };

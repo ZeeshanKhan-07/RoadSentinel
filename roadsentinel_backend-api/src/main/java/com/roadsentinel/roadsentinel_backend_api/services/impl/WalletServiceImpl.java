@@ -20,7 +20,8 @@ public class WalletServiceImpl implements WalletService {
     public Long getRemainingBalanceByEmail(String email) {
         Long earned = complaintRepository.sumRewardAmountByUserEmail(email);
         Long spent = orderRepository.sumTotalAmountByUserEmail(email);
-
+        System.out.println("Earned Amount " + earned);
+        System.out.println("Spent Amount " + spent);
         return Math.max(0, earned - spent);
 
     }

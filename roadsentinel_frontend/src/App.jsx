@@ -2,17 +2,19 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Navbar/Navbar";
 import Home from "./pages/home/home";
-import Dashboard from "./pages/dashboard/Dashboard";
+import Dashboard from "./pages/UserDashboard/Dashboard";
 import OptionsPage from "./pages/Options/OptionsPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import StorePage from "./pages/Store/StorePage";
 import ComplaintsPage from "./pages/Complaints/ComplaintsPage";
 import OrderForm from "./pages/Order/OrderForm";
-import AdminLoginPage from "./pages/Admins/Admin/AdminLoginPage";
+import AdminLoginPage from "./pages/Admins/ProductAdmin/AdminLoginPage";
 import AdminRoleProtectedRoute from "./routes/AdminRoleProtectedRoute";
-import AdminDashboard from "./pages/Admins/Admin/AdminDashboard";
+import AdminDashboard from "./pages/Admins/ProductAdmin/AdminDashboard";
 import AppLayout from "./layout/AppLayout";
-import ProductAdminPage from "./pages/Admins/Admin/ProductAdminPage";
+import ProductAdminPage from "./pages/Admins/ProductAdmin/ProductAdminPage";
+import OfficerPage from "./pages/Admins/Officer/OfficerPage";
+import FontTest from "./components/FontTest";
 function App() {
   return (
     <>
@@ -67,6 +69,8 @@ function App() {
         />
 
         <Route path='/admin/product/dashboard' element={<ProductAdminPage />} />
+        <Route path='/admin/officer/dashboard' element={<OfficerPage />} />
+        <Route path='/font-test' element={<FontTest />}/>
       </Routes>
     </>
   );

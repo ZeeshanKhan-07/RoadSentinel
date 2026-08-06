@@ -1,7 +1,6 @@
 package com.roadsentinel.roadsentinel_backend_api.security;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,73 +32,80 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-
-    private Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+                                    throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        logger.info("Authorization header: {}", header);
 
         if (header != null && header.startsWith("Bearer ")) {
-
             String token = header.substring(7);
 
-            if (!jwtService.isAccessToken(token)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
             try {
+                if (!jwtService.isAccessToken(token)) {
+                    sendUnauthorizedResponse(response, "Invalid token type");
+                    return;
+                }
+
                 Jws<Claims> parse = jwtService.parse(token);
                 Claims payload = parse.getPayload();
 
-                // 🔹 Extract data from JWT
                 String userId = payload.getSubject();
                 String email = payload.get("email", String.class);
                 List<String> roles = payload.get("roles", List.class);
 
                 UUID userUuid = UserHelper.parseUUID(userId);
 
-                // 🔹 Convert roles → authorities
                 List<GrantedAuthority> authorities = roles == null ? List.of()
                         : roles.stream()
-                                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role))
+                                .map(SimpleGrantedAuthority::new)
+                                .map(GrantedAuthority.class::cast)
                                 .toList();
 
-                // 🔹 Create authentication
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         email, null, authorities);
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 🔹 Set authentication in context
                 if (SecurityContextHolder.getContext().getAuthentication() == null) {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
 
             } catch (ExpiredJwtException e) {
-                request.setAttribute("error", "Token expired");
+                logger.warn("JWT expired for request {}: {}", request.getRequestURI(), e.getMessage());
+                sendUnauthorizedResponse(response, "JWT token expired");
+                return; // Stop filter execution
             } catch (MalformedJwtException e) {
-                request.setAttribute("error", "Malformed token");
+                logger.warn("Malformed JWT token: {}", e.getMessage());
+                sendUnauthorizedResponse(response, "Malformed token");
+                return; // Stop filter execution
             } catch (JwtException e) {
-                request.setAttribute("error", "Invalid token");
+                logger.warn("Invalid JWT token: {}", e.getMessage());
+                sendUnauthorizedResponse(response, "Invalid token");
+                return; // Stop filter execution
             } catch (Exception e) {
-                request.setAttribute("error", "Unexpected error occurred");
+                logger.error("Unexpected authentication error: ", e);
+                sendUnauthorizedResponse(response, "Authentication failed");
+                return; // Stop filter execution
             }
         }
 
         filterChain.doFilter(request, response);
     }
 
+    private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 Unauthorized
+        response.setContentType("application/json");
+        response.getWriter().write(String.format("{\"error\": \"Unauthorized\", \"message\": \"%s\"}", message));
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/v1/auth");
+        return path.startsWith("/api/v1/auth") || path.startsWith("/admin/auth");
     }
 }

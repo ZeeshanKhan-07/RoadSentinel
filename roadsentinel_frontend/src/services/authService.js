@@ -1,17 +1,11 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/auth";
+import apiClient from "../config/ApiClient";
 
 export const loginUser = async (data) => {
-  const response = await axios.post(`${API_URL}/login`, data, {
-    withCredentials: true,
-  });
-
+  const response = await apiClient.post("/api/v1/auth/login", data);
   return response.data;
 };
 
 export const logoutUser = async () => {
-  const response = await axios.post(`${API_URL}/logout`);
-
+  const response = await apiClient.post("/api/v1/auth/logout");
   return response.data;
 };

@@ -37,6 +37,7 @@ public class Orders {
     private long totalAmount;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 50)
     private OrderStatus status = OrderStatus.CONFIRMED;
 
     private Instant createdAt = Instant.now();

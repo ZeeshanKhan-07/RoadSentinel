@@ -1,5 +1,6 @@
 package com.roadsentinel.roadsentinel_backend_api.dtos.order;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -21,4 +22,5 @@ public class OrderItemResponse {
     private int quantity;
     private long price;
     private String size;
+    private List<String> images;
 }

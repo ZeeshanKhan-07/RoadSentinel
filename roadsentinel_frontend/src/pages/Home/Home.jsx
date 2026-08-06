@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import Hero from "../../components/Hero/Hero";
-import { AuthModal } from "../../components/Navbar/Navbar";
-import About from "../../components/About/About";
+import Hero from "../../components/sections/Hero/Hero";
+import Navbar, { AuthModal } from "../../components/Navbar/Navbar";
+import About from "../../components/sections/About/About";
+import ReviewSection from "../../components/sections/Reviews/ReviewSection";
+import HowItWorks from "../../components/sections/HowItWorks/HowItWorks";
+import Footer from "../../components/sections/Footer/Footer";
 
 const Home = () => {
 
@@ -19,6 +22,9 @@ const Home = () => {
     <div className="min-h-screen w-full" style={{ background: "#080808" }}>
       <Hero openAuth={openAuth} />
       <About />
+      <HowItWorks />
+      <ReviewSection />
+      <Footer />
 
       {authModal && (
         <AuthModal

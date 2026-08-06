@@ -20,6 +20,8 @@ public class WalletController {
     public ResponseEntity<Long> getBalance(Authentication authentication) {
         String userEmail = authentication.getName();
         Long balance = walletService.getRemainingBalanceByEmail(userEmail);
+        System.out.println(userEmail);
+        System.out.println(balance);
         return ResponseEntity.ok(balance);
     }
 }

@@ -143,10 +143,10 @@ const Register = ({ onClose, onSwitchToLogin }) => {
           font-weight: 600;
           cursor: pointer;
           transition: background 0.2s, transform 0.1s, opacity 0.2s;
-          font-family: 'DM Sans', sans-serif;
+          font: 'display';
           letter-spacing: 0.02em;
         }
-        .rs-btn-primary:hover:not(:disabled) { background: #e8e8e8; }
+        .rs-btn-primary:hover:not(:disabled) { background: #e8e8e8; padding:13.5; font-size:15px;}
         .rs-btn-primary:active:not(:disabled) { transform: scale(0.99); }
         .rs-btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
 
@@ -172,7 +172,7 @@ const Register = ({ onClose, onSwitchToLogin }) => {
       `}</style>
 
       {/* Brand */}
-      <p style={{ fontFamily: "'DM Mono', monospace", letterSpacing: "0.15em", fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginBottom: "20px", textTransform: "uppercase" }}>
+      <p className="font-display uppercase text-white text-center mb-1">
         Road Sentinel
       </p>
 
@@ -209,10 +209,10 @@ const Register = ({ onClose, onSwitchToLogin }) => {
       {/* STEP 1 */}
       {step === 1 && (
         <div className={sliding ? "step-slide-out" : ""}>
-          <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "20px", fontWeight: 600, color: "#fff", marginBottom: "4px" }}>
+          <h2 className="font-display text-white mb-1">
             Create account
           </h2>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "18px" }}>
+          <p style={{ font: "'grotesk'", fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "18px" }}>
             Fill in your details to get started.
           </p>
 
@@ -224,19 +224,19 @@ const Register = ({ onClose, onSwitchToLogin }) => {
 
           <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div>
-              <label style={{ display: "block", fontFamily: "'DM Sans', sans-serif", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.45)", marginBottom: "4px", letterSpacing: "0.04em" }}>FULL NAME</label>
+              <label className="block font-display text-[12px] font-medium text-white/45 mb-1 tracking-[0.04em] pl-1">Full Name</label>
               <input className="rs-reg-input" name="name" placeholder="John Doe" value={form.name} onChange={handleChange} required />
             </div>
             <div>
-              <label style={{ display: "block", fontFamily: "'DM Sans', sans-serif", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.45)", marginBottom: "4px", letterSpacing: "0.04em" }}>EMAIL</label>
+              <label className="block font-display text-[12px] font-medium text-white/45 mb-1 tracking-[0.04em] pl-1">Email</label>
               <input className="rs-reg-input" name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required />
             </div>
             <div>
-              <label style={{ display: "block", fontFamily: "'DM Sans', sans-serif", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.45)", marginBottom: "4px", letterSpacing: "0.04em" }}>PASSWORD</label>
+              <label className="block font-display text-[12px] font-medium text-white/45 mb-1 tracking-[0.04em] pl-1">Password</label>
               <input className="rs-reg-input" name="password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} required />
             </div>
 
-            <button className="rs-btn-primary" type="submit" disabled={loading} style={{ marginTop: "6px" }}>
+            <button className="rs-btn-primary font-display" type="submit" disabled={loading} style={{ marginTop: "6px" }}>
               {loading ? "Creating account…" : "Continue →"}
             </button>
           </form>

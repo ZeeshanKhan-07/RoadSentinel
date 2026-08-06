@@ -112,9 +112,18 @@ public class OrderServiceImpl implements OrderService {
         OrderStatusUpdateResponseDTO response = new OrderStatusUpdateResponseDTO();
         response.setOrderId(updatedOrder.getId());
         response.setStatus(updatedOrder.getStatus());
-        response.setUpdatedAt(Instant.now()); 
+        response.setUpdatedAt(Instant.now());
 
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponseDTO> getAllOrders() {
+        return orderRepository.findAll()
+                .stream()
+                .map(orderMapper::mapToResponse)
+                .toList();
     }
 
 }

@@ -10,21 +10,42 @@ import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderResponseDTO;
 import com.roadsentinel.roadsentinel_backend_api.entities.Address;
 import com.roadsentinel.roadsentinel_backend_api.entities.OrderItem;
 import com.roadsentinel.roadsentinel_backend_api.entities.Orders;
+import com.roadsentinel.roadsentinel_backend_api.entities.ProductImage;
 
 @Component
 public class OrderMapper {
 
         public OrderResponseDTO mapToResponse(Orders order) {
+                if (order == null) {
+                        return null;
+                }
 
                 List<OrderItemResponse> items = order.getItems() != null
                                 ? order.getItems().stream()
-                                                .map((OrderItem item) -> OrderItemResponse.builder()
-                                                                .productId(item.getProduct().getId())
-                                                                .productName(item.getProduct().getName())
-                                                                .quantity(item.getQuantity())
-                                                                .price(item.getPrice())
-                                                                .size(item.getSize())
-                                                                .build())
+                                                .map((OrderItem item) -> {
+                                                        // Extract product image URLs safely
+                                                        List<String> imageUrls = (item.getProduct() != null
+                                                                        && item.getProduct().getImages() != null)
+                                                                                        ? item.getProduct().getImages()
+                                                                                                        .stream()
+                                                                                                        .map(ProductImage::getImageUrl)
+                                                                                                        .toList()
+                                                                                        : List.of();
+
+                                                        return OrderItemResponse.builder()
+                                                                        .productId(item.getProduct() != null
+                                                                                        ? item.getProduct().getId()
+                                                                                        : null)
+                                                                        .productName(item.getProduct() != null
+                                                                                        ? item.getProduct().getName()
+                                                                                        : null)
+                                                                        .quantity(item.getQuantity())
+                                                                        .price(item.getPrice())
+                                                                        .size(item.getSize())
+                                                                        .images(imageUrls) // Added product images
+                                                                                           // mapping
+                                                                        .build();
+                                                })
                                                 .toList()
                                 : List.of();
 
@@ -48,9 +69,9 @@ public class OrderMapper {
 
                 return OrderResponseDTO.builder()
                                 .orderId(order.getId())
-                                .userId(order.getUser().getId())
-                                .userName(order.getUser().getName())
-                                .userEmail(order.getUser().getEmail())
+                                .userId(order.getUser() != null ? order.getUser().getId() : null)
+                                .userName(order.getUser() != null ? order.getUser().getName() : null)
+                                .userEmail(order.getUser() != null ? order.getUser().getEmail() : null)
                                 .totalAmount(order.getTotalAmount())
                                 .status(order.getStatus())
                                 .createdAt(order.getCreatedAt())

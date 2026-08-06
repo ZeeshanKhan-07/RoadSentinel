@@ -16,7 +16,9 @@ import com.roadsentinel.roadsentinel_backend_api.entities.Role;
 import com.roadsentinel.roadsentinel_backend_api.entities.User;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -29,11 +31,8 @@ import lombok.Setter;
 public class JwtService {
 
     private final SecretKey key;
-
     private final long accessTokenExpiration; // in seconds
-
     private final long refreshTokenExpiration; // in seconds
-
     private final String jwtIssuer;
 
     public JwtService(
@@ -52,10 +51,9 @@ public class JwtService {
         this.jwtIssuer = jwtIssuer;
     }
 
-    // generate token
+    // generate access token
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
-
         List<String> roles = user.getRoles() == null ? List.of() : user.getRoles().stream().map(Role::getName).toList();
 
         return Jwts.builder()
@@ -88,22 +86,29 @@ public class JwtService {
     }
 
     // parse token and validate
-    public Jws<Claims> parse(String token) {
-        try {
-            return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid token", e);
-        }
+    public Jws<Claims> parse(String token) throws ExpiredJwtException, JwtException {
+        // Allow ExpiredJwtException and JwtException to propagate naturally
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
     }
 
     public boolean isAccessToken(String token) {
-        Claims c = parse(token).getPayload();
-        return "access".equals(c.get("typ"));
+        try {
+            Claims c = parse(token).getPayload();
+            return "access".equals(c.get("typ"));
+        } catch (ExpiredJwtException e) {
+            throw e; // Rethrow so filter catches expiry specifically
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean isRefreshToken(String token) {
-        Claims c = parse(token).getPayload();
-        return "refresh".equals(c.get("typ"));
+        try {
+            Claims c = parse(token).getPayload();
+            return "refresh".equals(c.get("typ"));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public UUID getUserId(String token) {
@@ -115,5 +120,4 @@ public class JwtService {
         Claims c = parse(token).getPayload();
         return c.getId();
     }
-
 }

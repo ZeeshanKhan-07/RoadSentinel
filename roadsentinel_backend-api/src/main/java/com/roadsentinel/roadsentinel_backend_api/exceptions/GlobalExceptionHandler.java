@@ -1,5 +1,8 @@
 package com.roadsentinel.roadsentinel_backend_api.exceptions;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.naming.AuthenticationException;
 import javax.security.auth.login.CredentialExpiredException;
 
@@ -10,6 +13,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.roadsentinel.roadsentinel_backend_api.dtos.ApiError;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ErrorResponse;
@@ -41,5 +45,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, 400);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleMaxSize(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(Map.of("message", "Upload too large. Please reduce file sizes or count."));
     }
 }

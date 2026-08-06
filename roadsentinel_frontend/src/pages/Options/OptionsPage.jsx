@@ -107,7 +107,7 @@ const OPTIONS = [
     id: "bike",
     label: "Bike",
     sublabel: "Two Wheelers",
-    description: "Motorcycles, scooters & mopeds",
+    description: "Motorcycles & Scooters",
     icon: BikeIcon,
     accent: "#60a5fa",
   },
@@ -197,42 +197,21 @@ function OptionCard({ option, isSelected, onClick, cardRef }) {
 
       {/* Label */}
       <span
-        className="font-bold tracking-tight leading-none mb-1"
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "clamp(1rem, 1.8vw, 1.2rem)",
-          color: isSelected ? "#ffffff" : hovered ? "#f3f4f6" : "#d1d5db",
-          transition: "color 0.25s",
-        }}
+        className="font-display text-white text-xl tracking-tight leading-none mb-1"
       >
         {option.label}
       </span>
 
       {/* Sublabel */}
       <span
-        className="font-medium mb-3"
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "clamp(0.65rem, 1.1vw, 0.75rem)",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: isSelected ? option.accent : "#6b7280",
-          transition: "color 0.25s",
-        }}
+        className="font-grotesk uppercase text-gray-500 text-sm mb-3"
       >
         {option.sublabel}
       </span>
 
       {/* Description */}
       <p
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "clamp(0.7rem, 1vw, 0.8rem)",
-          color: "#6b7280",
-          textAlign: "center",
-          lineHeight: 1.5,
-          margin: 0,
-        }}
+        className="font-grotesk text-gray-500 text-xs"
       >
         {option.description}
       </p>
@@ -318,7 +297,7 @@ export default function OptionsPage() {
     <div
       className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-16"
       style={{
-        background: "#080808",
+        background: "#05070a",
         fontFamily: "'Inter', sans-serif",
       }}
     >
@@ -337,12 +316,7 @@ export default function OptionsPage() {
         </h2>
         <p
           ref={subtitleRef}
-          className="mt-2"
-          style={{
-            fontSize: "clamp(0.8rem, 1.5vw, 1rem)",
-            color: "#6b7280",
-            opacity: 0,
-          }}
+          className="mt-2 font-grotesk text-white"
         >
           Choose the category that best describes your vehicle
         </p>
@@ -376,13 +350,12 @@ export default function OptionsPage() {
       <div ref={btnRef} className="mt-10" style={{ opacity: 0 }}>
         <button
           onClick={() => selected && setShowForm(true)}
-          className="flex items-center gap-2 font-bold uppercase tracking-wider transition-all duration-200 active:scale-95"
+          className="flex font-display items-center gap-2 font-bold uppercase tracking-wider transition-all duration-200 active:scale-95"
           style={{
             background: selected ? "#ffffff" : "rgba(255,255,255,0.08)",
             color: selected ? "#000000" : "#4b5563",
             border: selected ? "none" : "1.5px solid rgba(255,255,255,0.1)",
             padding: "clamp(0.55rem, 1.5vw, 0.75rem) clamp(1.4rem, 3vw, 2.2rem)",
-            fontSize: "clamp(0.75rem, 1.2vw, 0.875rem)",
             borderRadius: "8px",
             cursor: selected ? "pointer" : "not-allowed",
             transition: "background 0.3s, color 0.3s, border 0.3s",

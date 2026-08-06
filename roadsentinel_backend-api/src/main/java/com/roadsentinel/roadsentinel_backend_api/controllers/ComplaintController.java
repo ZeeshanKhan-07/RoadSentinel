@@ -13,7 +13,7 @@ import com.roadsentinel.roadsentinel_backend_api.services.ComplaintService;
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping("/complaint")
+@RequestMapping("/api/v1/complaint")
 @AllArgsConstructor
 public class ComplaintController {
 

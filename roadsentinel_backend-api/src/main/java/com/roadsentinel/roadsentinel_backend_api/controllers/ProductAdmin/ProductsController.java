@@ -21,6 +21,7 @@ import com.roadsentinel.roadsentinel_backend_api.dtos.ProductBarChartDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductDashboardMetricsDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductRequestDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.ProductResponseDTO;
+import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderResponseDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderStatusMetricDTO;
 import com.roadsentinel.roadsentinel_backend_api.dtos.order.OrderStatusUpdateResponseDTO;
 import com.roadsentinel.roadsentinel_backend_api.services.OrderService;
@@ -95,7 +96,10 @@ public class ProductsController {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
     }
 
-    // Return request --. Iterate through the return request table and check the
-    // status as RETURN_REQUEST_SUBMITTED
+    @PreAuthorize("hasRole('PRODUCT_ADMIN')")
+    @GetMapping("/orders/all")
+    public ResponseEntity<List<OrderResponseDTO>> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
 
 }
