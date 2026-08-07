@@ -1,6 +1,6 @@
 ## RoadSentinel- AI Traffic Violation Reporting System
 
-RoadSentinel is a crowdsourced traffic rule enforcement and reward platform designed to promote road safety. It empowers responsible citizens to act as community watchdogs — reporting infractions like red-light jumping or reckless driving when traffic police aren't physically present. The platform incentivizes civic participation by rewarding users with monetary credits for valid reports, which can be redeemed for road safety gear and vehicle maintenance products.
+RoadSentinel is a community-driven platform that makes city roads safer by allowing everyday citizens to report traffic violations—like red-light jumping or reckless driving—when traffic police aren't around. When users submit valid reports with photo evidence, they earn cash rewards. These rewards can then be used in the app's store to buy road safety gear or vehicle maintenance essentials like helmets, vests, and engine oil.
 
 ## Application Preview
 
@@ -15,41 +15,41 @@ Frontend: https://roadsentinel.vercel.app
 This project was built to understand real-world full-stack system design combined with computer vision, including secure JWT-driven role-based authentication, asynchronous AI microservice integration, and end-to-end incident lifecycle management. It features a robust Spring Boot backend handling business logic, complaint workflows, and rewards, paired with a dedicated FastAPI microservice running YOLOv11 and PaddleOCR for automated number plate detection and recognition.
 
 ---
- 
-## 🚦 Complete End-to-End Workflow
- 
-1. **Evidence Capture & Upload** — A citizen witnesses a traffic violation, captures a photo of the offending vehicle, and uploads it as evidence through the web portal.
-2. **Automated Number Plate Extraction (AI Pipeline)** — The backend triggers the FastAPI service powered by **YOLOv11** to detect and crop the vehicle's number plate, then **PaddleOCR** reads the text from the cropped image.
-3. **User Review & Editing** — The extracted number plate is auto-populated into the report form; users can manually correct any AI misreads before proceeding.
-4. **Incident Details & Submission** — The user fills in location, timestamp, and violation description, then submits the challan request.
-5. **Officer Review & Challan Issuance** — Traffic police access the Officers Panel to review complaints and evidence, and approve valid ones to officially issue a challan.
-6. **Reward & Redemption System** — Approved complaints credit the reporting citizen with a cash reward (e.g. ₹15, ₹20, ₹30), trackable on the User Dashboard and redeemable for road safety gear (helmets, reflective vests, goggles) or vehicle essentials (fuel, engine oil, tires).
----
+  
+## 🚦 How It Works (End-to-End Workflow)
+
+1. **Capture & Upload** — You see a traffic violation, take a photo of the vehicle, and upload it through the app.
+2. **AI Plate Detection** — The system uses a Python AI tool (**YOLOv11** and **PaddleOCR**) to automatically find and read the vehicle's license plate number from the photo.
+3. **Review & Edit** — The recognized license plate number automatically fills into the form. You can double-check it and manually fix any errors if needed.
+4. **Submit Report** — Add the location, time, and description, then submit your report.
+5. **Police Verification** — Traffic officers review the submitted complaint and evidence. If it is valid, they approve it and issue a formal ticket (challan).
+6. **Earn & Redeem** — Once approved, you receive a cash reward (e.g., ₹15, ₹20, ₹30) credited to your wallet dashboard, which you can spend on safety gear or vehicle products in the store.
 
 ## 🚀 Features
 
 ### 👤 For Citizens (User Panel)
-- Upload violation evidence with AI-assisted number plate extraction
-- Manual correction of AI-misread plate numbers
-- Track complaint status and reward balance on a dashboard
-- Redeem earned credits in an in-app product store
-### 👮 For Officers (Officers Panel)
-- Review submitted complaints and evidence
-- Approve or reject reports
-- Issue challans and assign rewards to valid reports
+- Upload violation photos with automated AI license plate reading
+- Manually correct any mistakes made by the AI
+- Track your submitted reports and wallet reward balance
+- Spend your earnings in the built-in product store
+
+### 👮 For Officers (Officer Panel)
+- Review incoming citizen reports and attached photo proof
+- Approve or reject individual complaints
+- Issue challans and assign cash rewards for valid reports
+
 ### 🛒 For Admins (Product Admin Panel)
-- Manage road safety gear and vehicle product inventory
-- Handle order fulfillment for reward redemptions
+- Manage the store inventory (safety gear and vehicle products)
+- Track and fulfill customer product orders
 
 ---
 
 ## 🧠 Key Engineering Highlights
- 
-- Designed a **microservice architecture** separating core business logic (Spring Boot) from the AI vision pipeline (FastAPI), communicating asynchronously
-- Built an automated **number plate detection & OCR pipeline** using **YOLOv11** for detection/cropping and **PaddleOCR** for text extraction
-- Implemented **role-based access control** across three distinct panels (User, Officer, Product Admin) using **Spring Security & JWT**
-- Modeled a full **incident lifecycle**: report submission → officer review → challan issuance → reward crediting → redemption
-- Followed a modular backend architecture leveraging **Java, Spring Boot**, and **Python, FastAPI** for clean extensibility across services
+
+- **Microservice Architecture** — Separates the core Java backend from the Python AI vision service so they run independently.
+- **Automated License Plate Reader** — Uses **YOLOv11** to detect vehicle plates and **PaddleOCR** to read the text characters.
+- **Secure Access Control** — Protects user, officer, and admin panels using **Spring Security & JWT tokens**.
+- **Complete Lifecycle Management** — Handles everything from initial report submission and police review to reward payouts and store purchases.
 
 ---
 
