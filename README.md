@@ -1,6 +1,6 @@
-## RoadSentinel- AI Traffic Violation Reporting System
+## RoadSentinel - AI Traffic Violation Reporting System
 
-RoadSentinel is a community-driven platform that makes city roads safer by allowing everyday citizens to report traffic violations—like red-light jumping or reckless driving—when traffic police aren't around. When users submit valid reports with photo evidence, they earn cash rewards. These rewards can then be used in the app's store to buy road safety gear or vehicle maintenance essentials like helmets, vests, and engine oil.
+RoadSentinel is a community driven platform that makes city roads safer by allowing everyday citizens to report traffic violations like red light jumping or reckless driving when traffic police aren't around. When users submit valid reports with photo evidence, they earn cash rewards. These rewards can then be used in the app's store to buy road safety gear or vehicle maintenance essentials like helmets, vests, and engine oil.
 
 ## Application Preview
 
@@ -12,18 +12,18 @@ Images will be here.
 Frontend: https://roadsentinel.vercel.app
 
 
-This project was built to understand real-world full-stack system design combined with computer vision, including secure JWT-driven role-based authentication, asynchronous AI microservice integration, and end-to-end incident lifecycle management. It features a robust Spring Boot backend handling business logic, complaint workflows, and rewards, paired with a dedicated FastAPI microservice running YOLOv11 and PaddleOCR for automated number plate detection and recognition.
+This project was built to understand real world full stack system design combined with computer vision, including secure JWT driven role based authentication, asynchronous AI microservice integration, and end to end incident lifecycle management. It features a robust Spring Boot backend handling business logic, complaint workflows, and rewards, paired with a dedicated FastAPI microservice running YOLOv11 and PaddleOCR for automated number plate detection and recognition.
 
 ---
   
 ## 🚦 How It Works (End-to-End Workflow)
 
-1. **Capture & Upload** — You see a traffic violation, take a photo of the vehicle, and upload it through the app.
-2. **AI Plate Detection** — The system uses a Python AI tool (**YOLOv11** and **PaddleOCR**) to automatically find and read the vehicle's license plate number from the photo.
-3. **Review & Edit** — The recognized license plate number automatically fills into the form. You can double-check it and manually fix any errors if needed.
-4. **Submit Report** — Add the location, time, and description, then submit your report.
-5. **Police Verification** — Traffic officers review the submitted complaint and evidence. If it is valid, they approve it and issue a formal ticket (challan).
-6. **Earn & Redeem** — Once approved, you receive a cash reward (e.g., ₹15, ₹20, ₹30) credited to your wallet dashboard, which you can spend on safety gear or vehicle products in the store.
+1. **Capture & Upload:** You see a traffic violation, take a photo of the vehicle, and upload it through the app.
+2. **AI Plate Detection:** The system uses a Python AI tool (**YOLOv11** and **PaddleOCR**) to automatically find and read the vehicle's license plate number from the photo.
+3. **Review & Edit:** The recognized license plate number automatically fills into the form. You can double check it and manually fix any errors if needed.
+4. **Submit Report:** Add the location, time, and description, then submit your report.
+5. **Police Verification:** Traffic officers review the submitted complaint and evidence. If it is valid, they approve it and issue a formal ticket (challan).
+6. **Earn & Redeem:** Once approved, you receive a cash reward (e.g., ₹15, ₹20, ₹30) credited to your wallet dashboard, which you can spend on safety gear or vehicle products in the store.
 
 ## 🚀 Features
 
@@ -31,7 +31,7 @@ This project was built to understand real-world full-stack system design combine
 - Upload violation photos with automated AI license plate reading
 - Manually correct any mistakes made by the AI
 - Track your submitted reports and wallet reward balance
-- Spend your earnings in the built-in product store
+- Spend your earnings in the built in product store
 
 ### 👮 For Officers (Officer Panel)
 - Review incoming citizen reports and attached photo proof
@@ -113,7 +113,7 @@ Roadsentinel/
 │   │   │   ├── java/com/roadsentinel/roadsentinel_backend_api/  # Core application source code
 │   │   │   │   ├── config/                   # Security, database, and app configuration classes
 │   │   │   │   ├── controllers/              # REST API endpoint controllers
-│   │   │   │   │   ├── Officer/              # Traffic officer-specific controllers
+│   │   │   │   │   ├── Officer/              # Traffic officer specific controllers
 │   │   │   │   │   └── ProductAdmin/         # Store administration controllers
 │   │   │   │   ├── dtos/                     # Data Transfer Objects for requests and responses
 │   │   │   │   │   ├── ComplaintsOfficer/    # DTOs for officer reporting and metrics
@@ -138,7 +138,7 @@ Roadsentinel/
 │       ├── auth/                             # Authentication state stores and handlers
 │       ├── components/                       # Modular UI components
 │       │   ├── complaints/                   # Grievance cards and lightbox viewers
-│       │   ├── ComplaintsForm/               # Multi-step violation reporting wizard
+│       │   ├── ComplaintsForm/               # Multi step violation reporting wizard
 │       │   ├── Navbar/                       # Navigation components
 │       │   ├── Officer/                      # Traffic officer dashboard UI elements
 │       │   ├── ProductAdmin/                 # Store administration components
@@ -150,7 +150,7 @@ Roadsentinel/
 │       ├── hooks/                            # Custom React hooks (geolocation, animations)
 │       ├── layout/                           # Layout wrappers
 │       ├── pages/                            # Main view entry points for users and admins
-│       ├── routes/                           # Protected and role-based route wrappers
+│       ├── routes/                           # Protected and role based route wrappers
 │       └── services/                         # API service modules for backend communication
 │           ├── Officer/                      # Officer service hooks
 │           └── ProductAdmin/                 # Product admin service integrations
@@ -196,7 +196,7 @@ Roadsentinel/
 - `PATCH /api/admin/product/orders/{orderId}/status` - Updates fulfillment status for a store order (e.g., set to DELIVERED)[cite: 1].
 
 ### Product Administration & Analytics
-- `GET /api/admin/product/dashboard-metrics` - Retrieves high-level business metrics for the product admin dashboard.
+- `GET /api/admin/product/dashboard-metrics` - Retrieves high level business metrics for the product admin dashboard.
 - `GET /api/admin/product/charts/bar-metrics` - Fetches bar chart datasets for visualization of store analytics.
 - `GET /api/admin/product/charts/circular-metrics` - Fetches distribution data for circular chart analytics.
 
