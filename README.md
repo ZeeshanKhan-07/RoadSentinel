@@ -4,7 +4,42 @@ RoadSentinel is a community driven platform that makes city roads safer by allow
 
 ## Application Preview
 
-Images will be here.
+### Hero Section
+<img width="960" height="540" alt="Screenshot 2026-08-07 215040" src="https://github.com/user-attachments/assets/9f5059fa-ad59-42da-aee2-c188109789c8" />
+
+### Login Page
+<img width="960" height="540" alt="Screenshot 2026-08-07 215058" src="https://github.com/user-attachments/assets/cca7386f-30b5-4f23-a8fd-35c8cec2de88" />
+
+### Signup Page
+<img width="960" height="540" alt="Screenshot 2026-08-07 215111" src="https://github.com/user-attachments/assets/c275026d-0198-4a5c-9a15-6892ca283b4b" />
+
+### About Section 
+<img width="960" height="540" alt="Screenshot 2026-08-07 215144" src="https://github.com/user-attachments/assets/43fe8e45-5a4c-40d3-8bee-92e6fee88a6f" />
+
+### Steps Section
+<img width="960" height="540" alt="Screenshot 2026-08-07 215204" src="https://github.com/user-attachments/assets/bea442ea-bee7-4b49-a972-30dcb7d14893" />
+
+### Reviews Section
+
+<img width="960" height="540" alt="Screenshot 2026-08-07 215230" src="https://github.com/user-attachments/assets/fc14d534-c889-4f16-b5f6-d5266fcbd54d" />
+<img width="960" height="540" alt="Screenshot 2026-08-07 215255" src="https://github.com/user-attachments/assets/59f9ab25-ce9c-4f1c-bdcc-557c7d3c74ac" />
+
+### Register Complaint Page
+<img width="960" height="540" alt="Screenshot 2026-08-07 215758" src="https://github.com/user-attachments/assets/4927d7ed-5cd0-4e32-94ef-a5771c4799fa" />
+<img width="960" height="540" alt="Screenshot 2026-08-07 215812" src="https://github.com/user-attachments/assets/2549b9eb-27c5-42d6-8191-0a405ccfba47" />
+
+
+### User Dashboard
+<img width="960" height="540" alt="Screenshot 2026-08-07 215633" src="https://github.com/user-attachments/assets/db6a931d-8317-4753-83c2-9d13aaa08178" />
+
+
+### Store Page
+<img width="960" height="540" alt="Screenshot 2026-08-07 215652" src="https://github.com/user-attachments/assets/843cab83-4e73-43f6-ad9f-f939882db323" />
+
+
+### Registered Complaints Page
+<img width="960" height="540" alt="Screenshot 2026-08-07 215735" src="https://github.com/user-attachments/assets/c0ae0aac-b299-4ba8-8b7d-f80b642b77fa" />
+
 
 ---
 
