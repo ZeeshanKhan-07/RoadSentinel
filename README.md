@@ -1,4 +1,4 @@
-## RoadSentinel - AI Traffic Violation Reporting System
+## RoadSentinel - AI Traffic Violation Reporting & Reward System
 
 RoadSentinel is a community driven platform that makes city roads safer by allowing everyday citizens to report traffic violations like red light jumping or reckless driving when traffic police aren't around. When users submit valid reports with photo evidence, they earn cash rewards. These rewards can then be used in the app's store to buy road safety gear or vehicle maintenance essentials like helmets, vests, and engine oil.
 
